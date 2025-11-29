@@ -1,0 +1,10 @@
+[package]
+name = "tokenizer"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+unicode-segmentation.workspace = true
+
+[dev-dependencies]
+rstest.workspace = true

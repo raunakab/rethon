@@ -4,11 +4,11 @@ Python re-imagined.
 
 ## Features
 
-- Static, Turing _incomplete_ type system
+- Static, Turing-incomplete type system
 - Ultra-aggressive type-inference
 - Algebraic datatypes
 - Concise, pythonic syntax
-- First class expressions
+- First-class expressions
 - Advanced pattern matching
 - Precedence on _pure, functional programming_ (with some leeway for mutability)
 - Macros
@@ -25,7 +25,3 @@ Python re-imagined.
   - Syntax
 - Swift
   - Arc based memory-management
-
-## Syntax
-
-TODO!
