@@ -1,5 +1,5 @@
 [workspace]
-members = ["libs/tokenizer"]
+members = ["libs/tokenizer", "libs/aggregator"]
 resolver = "3"
 package.version = "0.1.0"
 package.edition = "2024"
@@ -11,6 +11,7 @@ clap.version = "4.5.39"
 clap.features = ["derive"]
 anyhow.version = "1.0.98"
 anyhow.features = ["backtrace"]
+tokenizer = { path = "libs/tokenizer" }
 
 [package]
 name = "rethon"

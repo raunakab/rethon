@@ -1,0 +1,10 @@
+[package]
+name = "aggregator"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokenizer.workspace = true
+
+[dev-dependencies]
+rstest.workspace = true
