@@ -3,50 +3,55 @@ mod tests;
 
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 
-pub fn tokenize(source: &str) -> impl Iterator<Item = (&str, GraphemeState)> {
+pub fn tokenize(source: &str) -> impl Iterator<Item = Token<'_>> {
     TokenIter::from(source)
 }
 
 struct TokenIter<'a> {
     source: &'a str,
-    graphemes: GraphemeIndices<'a>,
-    grapheme_state: Option<(usize, GraphemeState)>,
+    iter: GraphemeIndices<'a>,
+    iter_state: Option<(usize, TokenType)>,
 }
 
 impl<'a> From<&'a str> for TokenIter<'a> {
     fn from(source: &'a str) -> Self {
         return Self {
             source,
-            graphemes: source.grapheme_indices(true),
-            grapheme_state: None,
+            iter: source.grapheme_indices(true),
+            iter_state: None,
         };
     }
 }
 
 impl<'a> Iterator for TokenIter<'a> {
-    type Item = (&'a str, GraphemeState);
+    type Item = Token<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            match self.graphemes.next() {
+            match self.iter.next() {
                 Some((curr_index, curr_grapheme)) => {
-                    let curr_state = curr_grapheme.into();
-                    match self.grapheme_state {
-                        Some((prev_index, prev_state)) => {
-                            if matches!(prev_state, GraphemeState::Punctuation)
-                                || curr_state != prev_state
+                    let curr_type = curr_grapheme.into();
+                    match self.iter_state {
+                        Some((prev_index, prev_type)) => {
+                            if matches!(prev_type, TokenType::Punctuation) || curr_type != prev_type
                             {
-                                self.grapheme_state = Some((curr_index, curr_state));
-                                break Some((&self.source[prev_index..curr_index], prev_state));
+                                self.iter_state = Some((curr_index, curr_type));
+                                break Some(Token {
+                                    token: &self.source[prev_index..curr_index],
+                                    token_type: prev_type,
+                                });
                             }
                         }
-                        None => self.grapheme_state = Some((curr_index, curr_state)),
+                        None => self.iter_state = Some((curr_index, curr_type)),
                     }
                 }
-                None => match self.grapheme_state {
-                    Some((index, state)) => {
-                        self.grapheme_state = None;
-                        break Some((&self.source[index..], state));
+                None => match self.iter_state {
+                    Some((prev_index, prev_type)) => {
+                        self.iter_state = None;
+                        break Some(Token {
+                            token: &self.source[prev_index..],
+                            token_type: prev_type,
+                        });
                     }
                     None => break None,
                 },
@@ -56,7 +61,7 @@ impl<'a> Iterator for TokenIter<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GraphemeState {
+pub enum TokenType {
     Whitespace,
     Keyword,
     Numeric,
@@ -65,7 +70,7 @@ pub enum GraphemeState {
     Unknown,
 }
 
-impl<'a> From<&'a str> for GraphemeState {
+impl<'a> From<&'a str> for TokenType {
     fn from(source: &'a str) -> Self {
         if source.len() != 1 {
             return Self::Keyword;
@@ -88,4 +93,10 @@ impl<'a> From<&'a str> for GraphemeState {
 
         return Self::Unknown;
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Token<'a> {
+    pub token: &'a str,
+    pub token_type: TokenType,
 }

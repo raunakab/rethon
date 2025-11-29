@@ -1,88 +1,93 @@
-use crate::{GraphemeState, tokenize};
+use crate::{Token, TokenType, tokenize};
 
 #[rstest::rstest]
 #[case("", vec![])]
 #[case("a", vec![
-    ("a", GraphemeState::Keyword)
+    ("a", TokenType::Keyword)
 ])]
 #[case("ab", vec![
-    ("ab", GraphemeState::Keyword)
+    ("ab", TokenType::Keyword)
 ])]
 #[case("a b", vec![
-    ("a", GraphemeState::Keyword),
-    (" ", GraphemeState::Whitespace),
-    ("b", GraphemeState::Keyword),
+    ("a", TokenType::Keyword),
+    (" ", TokenType::Whitespace),
+    ("b", TokenType::Keyword),
 ])]
 #[case("a.b", vec![
-    ("a", GraphemeState::Keyword),
-    (".", GraphemeState::Punctuation),
-    ("b", GraphemeState::Keyword),
+    ("a", TokenType::Keyword),
+    (".", TokenType::Punctuation),
+    ("b", TokenType::Keyword),
 ])]
 #[case("0.1", vec![
-    ("0", GraphemeState::Numeric),
-    (".", GraphemeState::Punctuation),
-    ("1", GraphemeState::Numeric),
+    ("0", TokenType::Numeric),
+    (".", TokenType::Punctuation),
+    ("1", TokenType::Numeric),
 ])]
 #[case("!..!", vec![
-    ("!", GraphemeState::Punctuation),
-    (".", GraphemeState::Punctuation),
-    (".", GraphemeState::Punctuation),
-    ("!", GraphemeState::Punctuation),
+    ("!", TokenType::Punctuation),
+    (".", TokenType::Punctuation),
+    (".", TokenType::Punctuation),
+    ("!", TokenType::Punctuation),
 ])]
 #[case("Howdy there, partner!!!", vec![
-    ("Howdy", GraphemeState::Keyword),
-    (" ", GraphemeState::Whitespace),
-    ("there", GraphemeState::Keyword),
-    (",", GraphemeState::Punctuation),
-    (" ", GraphemeState::Whitespace),
-    ("partner", GraphemeState::Keyword),
-    ("!", GraphemeState::Punctuation),
-    ("!", GraphemeState::Punctuation),
-    ("!", GraphemeState::Punctuation),
+    ("Howdy", TokenType::Keyword),
+    (" ", TokenType::Whitespace),
+    ("there", TokenType::Keyword),
+    (",", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("partner", TokenType::Keyword),
+    ("!", TokenType::Punctuation),
+    ("!", TokenType::Punctuation),
+    ("!", TokenType::Punctuation),
 ])]
 #[case("{ x = 12; y = 1.2; return x + y; }", vec![
-    ("{", GraphemeState::Punctuation),
-    (" ", GraphemeState::Whitespace),
-    ("x", GraphemeState::Keyword),
-    (" ", GraphemeState::Whitespace),
-    ("=", GraphemeState::Punctuation),
-    (" ", GraphemeState::Whitespace),
-    ("12", GraphemeState::Numeric),
-    (";", GraphemeState::Punctuation),
-    (" ", GraphemeState::Whitespace),
-    ("y", GraphemeState::Keyword),
-    (" ", GraphemeState::Whitespace),
-    ("=", GraphemeState::Punctuation),
-    (" ", GraphemeState::Whitespace),
-    ("1", GraphemeState::Numeric),
-    (".", GraphemeState::Punctuation),
-    ("2", GraphemeState::Numeric),
-    (";", GraphemeState::Punctuation),
-    (" ", GraphemeState::Whitespace),
-    ("return", GraphemeState::Keyword),
-    (" ", GraphemeState::Whitespace),
-    ("x", GraphemeState::Keyword),
-    (" ", GraphemeState::Whitespace),
-    ("+", GraphemeState::Punctuation),
-    (" ", GraphemeState::Whitespace),
-    ("y", GraphemeState::Keyword),
-    (";", GraphemeState::Punctuation),
-    (" ", GraphemeState::Whitespace),
-    ("}", GraphemeState::Punctuation),
+    ("{", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("x", TokenType::Keyword),
+    (" ", TokenType::Whitespace),
+    ("=", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("12", TokenType::Numeric),
+    (";", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("y", TokenType::Keyword),
+    (" ", TokenType::Whitespace),
+    ("=", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("1", TokenType::Numeric),
+    (".", TokenType::Punctuation),
+    ("2", TokenType::Numeric),
+    (";", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("return", TokenType::Keyword),
+    (" ", TokenType::Whitespace),
+    ("x", TokenType::Keyword),
+    (" ", TokenType::Whitespace),
+    ("+", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("y", TokenType::Keyword),
+    (";", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("}", TokenType::Punctuation),
 ])]
 #[case("🙂🙂🙂", vec![
-    ("🙂🙂🙂", GraphemeState::Keyword),
+    ("🙂🙂🙂", TokenType::Keyword),
 ])]
 #[case("🙂🙂🙂 🚀launch🙂🙂!!! 🙃🙂", vec![
-    ("🙂🙂🙂", GraphemeState::Keyword),
-    (" ", GraphemeState::Whitespace),
-    ("🚀launch🙂🙂", GraphemeState::Keyword),
-    ("!", GraphemeState::Punctuation),
-    ("!", GraphemeState::Punctuation),
-    ("!", GraphemeState::Punctuation),
-    (" ", GraphemeState::Whitespace),
-    ("🙃🙂", GraphemeState::Keyword),
+    ("🙂🙂🙂", TokenType::Keyword),
+    (" ", TokenType::Whitespace),
+    ("🚀launch🙂🙂", TokenType::Keyword),
+    ("!", TokenType::Punctuation),
+    ("!", TokenType::Punctuation),
+    ("!", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("🙃🙂", TokenType::Keyword),
 ])]
-fn test(#[case] source: &str, #[case] expected: Vec<(&str, GraphemeState)>) {
-    assert_eq!(tokenize(source).collect::<Vec<_>>(), expected);
+fn test(#[case] source: &str, #[case] expected: Vec<(&str, TokenType)>) {
+    assert_eq!(
+        tokenize(source)
+            .map(|Token { token, token_type }| (token, token_type))
+            .collect::<Vec<_>>(),
+        expected
+    );
 }
