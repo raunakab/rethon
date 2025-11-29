@@ -70,6 +70,19 @@ use crate::{GraphemeState, tokenize};
     (" ", GraphemeState::Whitespace),
     ("}", GraphemeState::Punctuation),
 ])]
+#[case("🙂🙂🙂", vec![
+    ("🙂🙂🙂", GraphemeState::Keyword),
+])]
+#[case("🙂🙂🙂 🚀launch🙂🙂!!! 🙃🙂", vec![
+    ("🙂🙂🙂", GraphemeState::Keyword),
+    (" ", GraphemeState::Whitespace),
+    ("🚀launch🙂🙂", GraphemeState::Keyword),
+    ("!", GraphemeState::Punctuation),
+    ("!", GraphemeState::Punctuation),
+    ("!", GraphemeState::Punctuation),
+    (" ", GraphemeState::Whitespace),
+    ("🙃🙂", GraphemeState::Keyword),
+])]
 fn test(#[case] source: &str, #[case] expected: Vec<(&str, GraphemeState)>) {
     assert_eq!(tokenize(source).collect::<Vec<_>>(), expected);
 }
