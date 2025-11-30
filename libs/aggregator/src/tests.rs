@@ -134,7 +134,7 @@ use crate::{Brace, BraceDirection, Res, TokenType, aggregator};
 ]))]
 fn test_valid(#[case] source: &str, #[case] expected: Res<Vec<TokenType>>) {
     assert_eq!(
-        aggregator(tokenizer::tokenize(source))
+        aggregator(source)
             .map(|token| {
                 let token = token?;
                 Ok(token.token_type)

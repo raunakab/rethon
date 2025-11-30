@@ -11,11 +11,10 @@ use std::{iter::Peekable, ops::Range};
 
 type Res<T = ()> = Result<T, String>;
 
-pub fn aggregator<'a>(
-    tokenizer: impl Iterator<Item = tokenizer::Token<'a>>,
-) -> impl Iterator<Item = Res<Token<'a>>> {
+pub fn aggregator<'a>(source: &'a str) -> impl Iterator<Item = Res<Token<'a>>> {
     Aggregator {
-        tokenizer: tokenizer.peekable(),
+        source,
+        tokenizer: tokenizer::tokenize(source).peekable(),
     }
 }
 
@@ -23,6 +22,7 @@ struct Aggregator<'a, I>
 where
     I: Iterator<Item = tokenizer::Token<'a>>,
 {
+    source: &'a str,
     tokenizer: Peekable<I>,
 }
 
