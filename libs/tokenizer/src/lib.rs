@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod tests;
 
+use std::ops::Range;
+
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 
 pub fn tokenize(source: &str) -> impl Iterator<Item = Token<'_>> {
@@ -64,6 +66,13 @@ impl<'a> Iterator for Tokenizer<'a> {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Token<'a> {
+    pub token: &'a str,
+    pub range: Range<usize>,
+    pub token_type: TokenType,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenType {
     Whitespace,
@@ -94,11 +103,4 @@ impl<'a> From<&'a str> for TokenType {
 
         return Self::Unknown;
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Token<'a> {
-    pub token: &'a str,
-    pub range: std::ops::Range<usize>,
-    pub token_type: TokenType,
 }
