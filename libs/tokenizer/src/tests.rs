@@ -83,6 +83,15 @@ use crate::{Token, TokenType, tokenize};
     (" ", TokenType::Whitespace),
     ("🙃🙂", TokenType::Keyword),
 ])]
+#[case("a\nb\nc\nd", vec![
+    ("a", TokenType::Keyword),
+    ("\n", TokenType::Whitespace),
+    ("b", TokenType::Keyword),
+    ("\n", TokenType::Whitespace),
+    ("c", TokenType::Keyword),
+    ("\n", TokenType::Whitespace),
+    ("d", TokenType::Keyword),
+])]
 fn test(#[case] source: &str, #[case] expected: Vec<(&str, TokenType)>) {
     assert_eq!(
         tokenize(source)

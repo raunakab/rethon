@@ -4,16 +4,16 @@ mod tests;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 
 pub fn tokenize(source: &str) -> impl Iterator<Item = Token<'_>> {
-    TokenIter::from(source)
+    Tokenizer::from(source)
 }
 
-struct TokenIter<'a> {
+struct Tokenizer<'a> {
     source: &'a str,
     iter: GraphemeIndices<'a>,
     iter_state: Option<(usize, TokenType)>,
 }
 
-impl<'a> From<&'a str> for TokenIter<'a> {
+impl<'a> From<&'a str> for Tokenizer<'a> {
     fn from(source: &'a str) -> Self {
         return Self {
             source,
@@ -23,7 +23,7 @@ impl<'a> From<&'a str> for TokenIter<'a> {
     }
 }
 
-impl<'a> Iterator for TokenIter<'a> {
+impl<'a> Iterator for Tokenizer<'a> {
     type Item = Token<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -66,7 +66,6 @@ pub enum TokenType {
     Keyword,
     Numeric,
     Punctuation,
-    Control,
     Unknown,
 }
 
@@ -87,8 +86,6 @@ impl<'a> From<&'a str> for TokenType {
             return Self::Numeric;
         } else if character.is_ascii_punctuation() {
             return Self::Punctuation;
-        } else if character.is_ascii_control() {
-            return Self::Control;
         }
 
         return Self::Unknown;
