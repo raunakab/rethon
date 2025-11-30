@@ -30,7 +30,7 @@ impl<'a, I> Aggregator<'a, I>
 where
     I: Iterator<Item = tokenizer::Token<'a>>,
 {
-    fn parse_string(&mut self, opening: Range<usize>) -> Res<Token<'a>> {
+    fn parse_string(&mut self, string_type: StringType, opening: Range<usize>) -> Res<Token<'a>> {
         let closing = loop {
             let Some(tokenizer::Token {
                 token,
@@ -53,7 +53,7 @@ where
         let content = &self.source[range.clone()];
 
         Ok(Token {
-            token_type: TokenType::String(content),
+            token_type: TokenType::String(content, string_type),
             range,
         })
     }
@@ -125,6 +125,12 @@ where
                     "else" => TokenType::Else,
                     "true" => TokenType::True,
                     "false" => TokenType::False,
+
+                    // string-formatting
+                    "f" => peek! {
+                        ("\"", ..) => break Some(self.parse_string(StringType::Formatted, range)),
+                        _ => TokenType::Identifier(token),
+                    },
                     _ => TokenType::Identifier(token),
                 },
                 tokenizer::TokenType::Numeric => peek! {
@@ -137,7 +143,7 @@ where
                     _ => TokenType::Number(token),
                 },
                 tokenizer::TokenType::Punctuation => match token {
-                    "\"" => break Some(self.parse_string(range)),
+                    "\"" => break Some(self.parse_string(StringType::Normal, range)),
                     "=" => peek! {
                         ("=", ..) => TokenType::Equals,
                         _ => TokenType::Assignment,
@@ -216,7 +222,7 @@ pub enum TokenType<'a> {
     // Identifiers
     MacroIdentifier(&'a str),
     Identifier(&'a str),
-    String(&'a str),
+    String(&'a str, StringType),
     Number(&'a str),
     Float(&'a str, Option<&'a str>),
 
@@ -277,4 +283,10 @@ pub enum Brace {
 pub enum BraceDirection {
     Open,
     Close,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StringType {
+    Normal,
+    Formatted,
 }
