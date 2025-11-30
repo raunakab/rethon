@@ -33,7 +33,9 @@ impl<'a> Iterator for Tokenizer<'a> {
                     let curr_type = curr_grapheme.into();
                     match self.iter_state {
                         Some((prev_index, prev_type)) => {
-                            if matches!(prev_type, TokenType::Punctuation) || curr_type != prev_type
+                            if matches!(prev_type, TokenType::Punctuation)
+                                || matches!(prev_type, TokenType::Whitespace)
+                                || curr_type != prev_type
                             {
                                 self.iter_state = Some((curr_index, curr_type));
                                 break Some(Token {

@@ -92,6 +92,37 @@ use crate::{Token, TokenType, tokenize};
     ("\n", TokenType::Whitespace),
     ("d", TokenType::Keyword),
 ])]
+#[case("a\tb\tc", vec![
+    ("a", TokenType::Keyword),
+    ("\t", TokenType::Whitespace),
+    ("b", TokenType::Keyword),
+    ("\t", TokenType::Whitespace),
+    ("c", TokenType::Keyword),
+])]
+#[case("\t\t\tindented", vec![
+    ("\t", TokenType::Whitespace),
+    ("\t", TokenType::Whitespace),
+    ("\t", TokenType::Whitespace),
+    ("indented", TokenType::Keyword),
+])]
+#[case("a\r\nb", vec![
+    ("a\r\nb", TokenType::Keyword),
+])]
+#[case("mixed \t\n whitespace", vec![
+    ("mixed", TokenType::Keyword),
+    (" ", TokenType::Whitespace),
+    ("\t", TokenType::Whitespace),
+    ("\n", TokenType::Whitespace),
+    (" ", TokenType::Whitespace),
+    ("whitespace", TokenType::Keyword),
+])]
+#[case("tab\tseparated\tvalues", vec![
+    ("tab", TokenType::Keyword),
+    ("\t", TokenType::Whitespace),
+    ("separated", TokenType::Keyword),
+    ("\t", TokenType::Whitespace),
+    ("values", TokenType::Keyword),
+])]
 fn test(#[case] source: &str, #[case] expected: Vec<(&str, TokenType)>) {
     assert_eq!(
         tokenize(source)
