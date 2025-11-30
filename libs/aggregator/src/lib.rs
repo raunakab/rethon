@@ -3,15 +3,19 @@ mod tests;
 
 use std::{iter::Peekable, ops::Range};
 
-type Res<'a, T = ()> = Result<T, Error<'a>>;
+use thiserror::Error;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Error<'a> {
-    UnknownToken(&'a str),
+type Res<T = ()> = Result<T, Error>;
+
+#[derive(Clone, Debug, PartialEq, Eq, Error)]
+pub enum Error {
+    #[error("Unknown token: {0}")]
+    UnknownToken(String),
+    #[error("Unterminated string at byte {0}")]
     UnterminatedString(usize),
 }
 
-pub fn aggregator<'a>(source: &'a str) -> impl Iterator<Item = Res<'a, Token<'a>>> {
+pub fn aggregator<'a>(source: &'a str) -> impl Iterator<Item = Res<Token<'a>>> {
     Aggregator {
         source,
         tokenizer: tokenizer::tokenize(source).peekable(),
@@ -30,11 +34,7 @@ impl<'a, I> Aggregator<'a, I>
 where
     I: Iterator<Item = tokenizer::Token<'a>>,
 {
-    fn parse_string(
-        &mut self,
-        string_type: StringType,
-        opening: Range<usize>,
-    ) -> Res<'a, Token<'a>> {
+    fn parse_string(&mut self, string_type: StringType, opening: Range<usize>) -> Res<Token<'a>> {
         let closing = loop {
             let Some(tokenizer::Token {
                 token,
@@ -64,7 +64,7 @@ impl<'a, I> Iterator for Aggregator<'a, I>
 where
     I: Iterator<Item = tokenizer::Token<'a>>,
 {
-    type Item = Res<'a, Token<'a>>;
+    type Item = Res<Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Helper macro to peek and match on next token
@@ -110,7 +110,7 @@ where
                             }
                         }
                     }
-                    token => break Some(Err(Error::UnknownToken(token))),
+                    token => break Some(Err(Error::UnknownToken(token.to_string()))),
                 },
                 tokenizer::TokenType::Keyword => match token {
                     "fn" => TokenType::Function,
@@ -199,9 +199,11 @@ where
                     "]" => TokenType::Brace(Brace::Square, BraceDirection::Close),
                     "{" => TokenType::Brace(Brace::Curly, BraceDirection::Open),
                     "}" => TokenType::Brace(Brace::Curly, BraceDirection::Close),
-                    token => break Some(Err(Error::UnknownToken(token))),
+                    token => break Some(Err(Error::UnknownToken(token.to_string()))),
                 },
-                tokenizer::TokenType::Unknown => break Some(Err(Error::UnknownToken(token))),
+                tokenizer::TokenType::Unknown => {
+                    break Some(Err(Error::UnknownToken(token.to_string())));
+                }
             };
 
             break Some(Ok(Token { token_type, range }));
