@@ -38,7 +38,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                                 self.iter_state = Some((curr_index, curr_type));
                                 break Some(Token {
                                     token: &self.source[prev_index..curr_index],
-                                    offset: prev_index,
+                                    range: prev_index..curr_index,
                                     token_type: prev_type,
                                 });
                             }
@@ -51,7 +51,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                         self.iter_state = None;
                         break Some(Token {
                             token: &self.source[prev_index..],
-                            offset: prev_index,
+                            range: prev_index..self.source.len(),
                             token_type: prev_type,
                         });
                     }
@@ -94,9 +94,9 @@ impl<'a> From<&'a str> for TokenType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token<'a> {
     pub token: &'a str,
-    pub offset: usize,
+    pub range: std::ops::Range<usize>,
     pub token_type: TokenType,
 }
