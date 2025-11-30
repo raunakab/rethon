@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 aggregator.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 rstest.workspace = true
