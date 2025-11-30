@@ -59,6 +59,7 @@ use crate::{Brace, BraceDirection, Res, StringType, TokenType, aggregator};
     TokenType::Identifier("add"),
     TokenType::Brace(Brace::Round, BraceDirection::Open),
     TokenType::Identifier("x"),
+    TokenType::Comma,
     TokenType::Whitespace(1),
     TokenType::Identifier("y"),
     TokenType::Brace(Brace::Round, BraceDirection::Close),
@@ -72,6 +73,7 @@ use crate::{Brace, BraceDirection, Res, StringType, TokenType, aggregator};
     TokenType::Plus,
     TokenType::Whitespace(1),
     TokenType::Identifier("y"),
+    TokenType::Semicolon,
     TokenType::Whitespace(1),
     TokenType::Brace(Brace::Curly, BraceDirection::Close),
 ]))]

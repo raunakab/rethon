@@ -143,6 +143,8 @@ where
                     _ => TokenType::Number(token),
                 },
                 tokenizer::TokenType::Punctuation => match token {
+                    ";" => TokenType::Semicolon,
+                    "," => TokenType::Comma,
                     "\"" => break Some(self.parse_string(StringType::Normal, range)),
                     "=" => peek! {
                         ("=", ..) => TokenType::Equals,
@@ -215,9 +217,11 @@ pub struct Token<'a> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TokenType<'a> {
     // Control
-    Newline,
-    Tab,
-    Whitespace(usize),
+    Newline,           // \n
+    Tab,               // \t
+    Whitespace(usize), // ` `; also keeps a track of the number of consecutive whitespace chars
+    Semicolon,         // ;
+    Comma,             // ,
 
     // Identifiers
     MacroIdentifier(&'a str),
