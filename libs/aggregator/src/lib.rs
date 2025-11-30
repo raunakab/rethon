@@ -1,25 +1,21 @@
-pub fn aggregator<'a>(source: &'a str) -> impl Iterator<Item = Token<'a>> {
-    Aggregator::new(source, tokenizer::tokenize(source))
+#[cfg(test)]
+mod tests;
+
+use std::{iter::Peekable, ops::Range};
+
+pub fn aggregator<'a>(
+    tokenizer: impl Iterator<Item = tokenizer::Token<'a>>,
+) -> impl Iterator<Item = Token<'a>> {
+    Aggregator {
+        tokenizer: tokenizer.peekable(),
+    }
 }
 
 struct Aggregator<'a, I>
 where
     I: Iterator<Item = tokenizer::Token<'a>>,
 {
-    source: &'a str,
-    tokenizer: std::iter::Peekable<I>,
-}
-
-impl<'a, I> Aggregator<'a, I>
-where
-    I: Iterator<Item = tokenizer::Token<'a>>,
-{
-    fn new(source: &'a str, tokenizer: I) -> Self {
-        Self {
-            source,
-            tokenizer: tokenizer.peekable(),
-        }
-    }
+    tokenizer: Peekable<I>,
 }
 
 impl<'a, I> Iterator for Aggregator<'a, I>
@@ -34,7 +30,7 @@ where
         // Automatically wraps tuple patterns in Some()
         macro_rules! peek {
             ($(($($inner:tt)*) => $result:expr),+ $(, _ => $default:expr)? $(,)?) => {{
-                let next_token = self.tokenizer.peek().map(|t| (t.token, t.range.clone(), t.token_type));
+                let next_token = self.tokenizer.peek().map(|t| (t.token, t.token_type));
                 match next_token {
                     $(
                         Some(($($inner)*)) => {
@@ -59,100 +55,108 @@ where
                 break None;
             };
 
-            break Some(match token_type {
+            let token_type = match token_type {
                 tokenizer::TokenType::Whitespace => match token {
-                    "\n" => Token::Newline,
-                    "\t" => Token::Tab,
+                    "\n" => TokenType::Newline,
+                    "\t" => TokenType::Tab,
                     _ => continue, // Skip other whitespace (spaces, etc.)
                 },
                 tokenizer::TokenType::Keyword => match token {
-                    "fn" => Token::Function,
-                    "scope" => Token::Scope,
-                    "return" => Token::Return,
-                    "yield" => Token::Yield,
-                    "not" => Token::Not,
-                    "and" => Token::And,
-                    "or" => Token::Or,
-                    "for" => Token::For,
-                    "loop" => Token::Loop,
-                    "if" => Token::If,
-                    "else" => Token::Else,
-                    "true" => Token::True,
-                    "false" => Token::False,
-                    _ => Token::Identifier(token),
+                    "fn" => TokenType::Function,
+                    "scope" => TokenType::Scope,
+                    "return" => TokenType::Return,
+                    "yield" => TokenType::Yield,
+                    "not" => TokenType::Not,
+                    "and" => TokenType::And,
+                    "or" => TokenType::Or,
+                    "for" => TokenType::For,
+                    "loop" => TokenType::Loop,
+                    "if" => TokenType::If,
+                    "else" => TokenType::Else,
+                    "true" => TokenType::True,
+                    "false" => TokenType::False,
+                    _ => TokenType::Identifier(token),
                 },
                 tokenizer::TokenType::Numeric => peek! {
-                    (".", dot_range, _) => {
+                    (".", ..) => {
                         peek! {
-                            (_, frac_range, tokenizer::TokenType::Numeric) => Token::Number(&self.source[range.start..frac_range.end]),
-                            _ => Token::Number(&self.source[range.start..dot_range.end]),
+                            (fraction, tokenizer::TokenType::Numeric) => TokenType::Float(token, Some(fraction)),
+                            _ => TokenType::Float(token, None),
                         }
                     },
-                    _ => Token::Number(token),
+                    _ => TokenType::Number(token),
                 },
                 tokenizer::TokenType::Punctuation => match token {
                     "=" => peek! {
-                        ("=", ..) => Token::Equals,
-                        _ => Token::Assignment,
+                        ("=", ..) => TokenType::Equals,
+                        _ => TokenType::Assignment,
                     },
                     "!" => peek! {
-                        (ident, _, tokenizer::TokenType::Keyword) => Token::MacroIdentifier(ident),
-                        _ => Token::Promotion,
+                        (ident, tokenizer::TokenType::Keyword) => TokenType::MacroIdentifier(ident),
+                        _ => TokenType::Promotion,
                     },
-                    "?" => Token::Coalescence,
-                    "@" => Token::Ampersand,
+                    "?" => TokenType::Coalescence,
+                    "@" => TokenType::Ampersand,
                     ":" => peek! {
-                        ("=", ..) => Token::ConstantAssignment,
-                        _ => Token::Colon,
+                        ("=", ..) => TokenType::ConstantAssignment,
+                        _ => TokenType::Colon,
                     },
                     "." => peek! {
-                        (".", ..) => Token::DoubleDot,
-                        _ => Token::Dot,
+                        (".", ..) => TokenType::DoubleDot,
+                        _ => TokenType::Dot,
                     },
-                    "+" => Token::Plus,
+                    "+" => TokenType::Plus,
                     "-" => peek! {
-                        ("-", ..) => Token::DoubleMinus,
-                        (">", ..) => Token::Arrow,
-                        _ => Token::Minus,
+                        ("-", ..) => TokenType::DoubleMinus,
+                        (">", ..) => TokenType::Arrow,
+                        _ => TokenType::Minus,
                     },
                     "*" => peek! {
-                        ("*", ..) => Token::DoubleAsterisk,
-                        _ => Token::Asterisk,
+                        ("*", ..) => TokenType::DoubleAsterisk,
+                        _ => TokenType::Asterisk,
                     },
-                    "/" => Token::Slash,
+                    "/" => TokenType::Slash,
                     "|" => peek! {
                         (">", ..) => peek! {
-                            (">", ..) => Token::PipeDoubleForward,
-                            _ => Token::PipeForward,
+                            (">", ..) => TokenType::PipeDoubleForward,
+                            _ => TokenType::PipeForward,
                         },
-                        _ => Token::Pipe,
+                        _ => TokenType::Pipe,
                     },
                     ">" => peek! {
-                        ("=", ..) => Token::GreaterOrEqual,
-                        (">", ..) => Token::DoubleGreater,
-                        _ => Token::Greater,
+                        ("=", ..) => TokenType::GreaterOrEqual,
+                        (">", ..) => TokenType::DoubleGreater,
+                        _ => TokenType::Greater,
                     },
                     "<" => peek! {
-                        ("=", ..) => Token::LesserOrEqual,
-                        ("<", ..) => Token::DoubleLesser,
-                        _ => Token::Lesser,
+                        ("=", ..) => TokenType::LesserOrEqual,
+                        ("<", ..) => TokenType::DoubleLesser,
+                        _ => TokenType::Lesser,
                     },
-                    "(" => Token::Brace(Brace::Round, BraceDirection::Open),
-                    ")" => Token::Brace(Brace::Round, BraceDirection::Close),
-                    "[" => Token::Brace(Brace::Square, BraceDirection::Open),
-                    "]" => Token::Brace(Brace::Square, BraceDirection::Close),
-                    "{" => Token::Brace(Brace::Curly, BraceDirection::Open),
-                    "}" => Token::Brace(Brace::Curly, BraceDirection::Close),
+                    "(" => TokenType::Brace(Brace::Round, BraceDirection::Open),
+                    ")" => TokenType::Brace(Brace::Round, BraceDirection::Close),
+                    "[" => TokenType::Brace(Brace::Square, BraceDirection::Open),
+                    "]" => TokenType::Brace(Brace::Square, BraceDirection::Close),
+                    "{" => TokenType::Brace(Brace::Curly, BraceDirection::Open),
+                    "}" => TokenType::Brace(Brace::Curly, BraceDirection::Close),
                     _ => continue, // Skip unknown punctuation
                 },
                 tokenizer::TokenType::Unknown => continue,
-            });
+            };
+
+            break Some(Token { token_type, range });
         }
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Token<'a> {
+    token_type: TokenType<'a>,
+    range: Range<usize>,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Token<'a> {
+pub enum TokenType<'a> {
     // Control
     Newline,
     Tab,
@@ -161,6 +165,7 @@ pub enum Token<'a> {
     MacroIdentifier(&'a str),
     Identifier(&'a str),
     Number(&'a str),
+    Float(&'a str, Option<&'a str>),
 
     // Keywords
     Function, // fn
