@@ -123,6 +123,43 @@ use crate::{Token, TokenType, tokenize};
     ("\t", TokenType::Whitespace),
     ("values", TokenType::Keyword),
 ])]
+#[case("\"", vec![
+    ("\"", TokenType::Punctuation),
+])]
+#[case("'", vec![
+    ("'", TokenType::Punctuation),
+])]
+#[case("`", vec![
+    ("`", TokenType::Punctuation),
+])]
+#[case("\"hello\"", vec![
+    ("\"", TokenType::Punctuation),
+    ("hello", TokenType::Keyword),
+    ("\"", TokenType::Punctuation),
+])]
+#[case("'world'", vec![
+    ("'", TokenType::Punctuation),
+    ("world", TokenType::Keyword),
+    ("'", TokenType::Punctuation),
+])]
+#[case("`backtick`", vec![
+    ("`", TokenType::Punctuation),
+    ("backtick", TokenType::Keyword),
+    ("`", TokenType::Punctuation),
+])]
+#[case("\"double\" 'single' `back`", vec![
+    ("\"", TokenType::Punctuation),
+    ("double", TokenType::Keyword),
+    ("\"", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("'", TokenType::Punctuation),
+    ("single", TokenType::Keyword),
+    ("'", TokenType::Punctuation),
+    (" ", TokenType::Whitespace),
+    ("`", TokenType::Punctuation),
+    ("back", TokenType::Keyword),
+    ("`", TokenType::Punctuation),
+])]
 fn test(#[case] source: &str, #[case] expected: Vec<(&str, TokenType)>) {
     assert_eq!(
         tokenize(source)
