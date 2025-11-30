@@ -26,6 +26,39 @@ where
     tokenizer: Peekable<I>,
 }
 
+impl<'a, I> Aggregator<'a, I>
+where
+    I: Iterator<Item = tokenizer::Token<'a>>,
+{
+    fn parse_string(&mut self, opening: Range<usize>) -> Res<Token<'a>> {
+        let closing = loop {
+            let Some(tokenizer::Token {
+                token,
+                range,
+                token_type,
+            }) = self.tokenizer.next()
+            else {
+                return err!(
+                    "Unterminated string literal starting at byte {}",
+                    opening.start
+                );
+            };
+
+            if matches!(token_type, tokenizer::TokenType::Punctuation) && matches!(token, "\"") {
+                break range;
+            }
+        };
+
+        let range = opening.start..closing.end;
+        let content = &self.source[range.clone()];
+
+        Ok(Token {
+            token_type: TokenType::String(content),
+            range,
+        })
+    }
+}
+
 impl<'a, I> Iterator for Aggregator<'a, I>
 where
     I: Iterator<Item = tokenizer::Token<'a>>,
@@ -104,6 +137,7 @@ where
                     _ => TokenType::Number(token),
                 },
                 tokenizer::TokenType::Punctuation => match token {
+                    "\"" => break Some(self.parse_string(range)),
                     "=" => peek! {
                         ("=", ..) => TokenType::Equals,
                         _ => TokenType::Assignment,
@@ -182,6 +216,7 @@ pub enum TokenType<'a> {
     // Identifiers
     MacroIdentifier(&'a str),
     Identifier(&'a str),
+    String(&'a str),
     Number(&'a str),
     Float(&'a str, Option<&'a str>),
 
