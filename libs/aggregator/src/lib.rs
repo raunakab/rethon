@@ -1,11 +1,19 @@
 #[cfg(test)]
 mod tests;
 
+macro_rules! err {
+    ($($arg:tt)*) => {
+        crate::Res::Err(format!($($arg)*))
+    };
+}
+
 use std::{iter::Peekable, ops::Range};
+
+type Res<T = ()> = Result<T, String>;
 
 pub fn aggregator<'a>(
     tokenizer: impl Iterator<Item = tokenizer::Token<'a>>,
-) -> impl Iterator<Item = Token<'a>> {
+) -> impl Iterator<Item = Res<Token<'a>>> {
     Aggregator {
         tokenizer: tokenizer.peekable(),
     }
@@ -22,7 +30,7 @@ impl<'a, I> Iterator for Aggregator<'a, I>
 where
     I: Iterator<Item = tokenizer::Token<'a>>,
 {
-    type Item = Token<'a>;
+    type Item = Res<Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Helper macro to peek and match on next token
@@ -68,7 +76,7 @@ where
                             }
                         }
                     }
-                    _ => continue, // Skip other whitespace (spaces, etc.)
+                    _ => break Some(err!("Unknown whitespace character: {:?}", token)),
                 },
                 tokenizer::TokenType::Keyword => match token {
                     "fn" => TokenType::Function,
@@ -148,12 +156,12 @@ where
                     "]" => TokenType::Brace(Brace::Square, BraceDirection::Close),
                     "{" => TokenType::Brace(Brace::Curly, BraceDirection::Open),
                     "}" => TokenType::Brace(Brace::Curly, BraceDirection::Close),
-                    _ => continue, // Skip unknown punctuation
+                    _ => break Some(err!("Unknown punctuation: {:?}", token)),
                 },
-                tokenizer::TokenType::Unknown => continue,
+                tokenizer::TokenType::Unknown => break Some(err!("Unknown token: {:?}", token)),
             };
 
-            break Some(Token { token_type, range });
+            break Some(Ok(Token { token_type, range }));
         }
     }
 }
