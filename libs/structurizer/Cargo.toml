@@ -1,0 +1,10 @@
+[package]
+name = "structurizer"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+aggregator.workspace = true
+
+[dev-dependencies]
+rstest.workspace = true
