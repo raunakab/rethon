@@ -1,4 +1,4 @@
-use crate::{Brace, BraceDirection, Res, Token, TokenType, aggregator};
+use crate::{Brace, BraceDirection, Res, TokenType, aggregator};
 
 #[rstest::rstest]
 #[case("", Ok(vec![]))]
