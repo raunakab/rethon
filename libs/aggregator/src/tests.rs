@@ -1,4 +1,4 @@
-use crate::{Brace, BraceDirection, Res, StringType, TokenType, aggregator};
+use crate::{Brace, BraceDirection, Error, Res, StringType, TokenType, aggregator};
 
 #[rstest::rstest]
 #[case("", Ok(vec![]))]
@@ -153,18 +153,9 @@ use crate::{Brace, BraceDirection, Res, StringType, TokenType, aggregator};
     TokenType::Whitespace(3),
     TokenType::Identifier("y"),
 ]))]
-#[case(
-    "\"",
-    Err(String::from("Unterminated string literal starting at byte 0"))
-)]
-#[case(
-    "x = \"unterminated",
-    Err(String::from("Unterminated string literal starting at byte 4"))
-)]
-#[case(
-    "f\"unterminated ${name}",
-    Err(String::from("Unterminated string literal starting at byte 1"))
-)]
+#[case("\"", Err(Error::UnterminatedString(0)))]
+#[case("x = \"unterminated", Err(Error::UnterminatedString(4)))]
+#[case("f\"unterminated ${name}", Err(Error::UnterminatedString(1)))]
 fn test_tokenization(#[case] source: &str, #[case] expected: Res<Vec<TokenType>>) {
     assert_eq!(
         aggregator(source)

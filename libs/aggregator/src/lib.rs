@@ -1,17 +1,17 @@
 #[cfg(test)]
 mod tests;
 
-macro_rules! err {
-    ($($arg:tt)*) => {
-        crate::Res::Err(format!($($arg)*))
-    };
-}
-
 use std::{iter::Peekable, ops::Range};
 
-type Res<T = ()> = Result<T, String>;
+type Res<'a, T = ()> = Result<T, Error<'a>>;
 
-pub fn aggregator<'a>(source: &'a str) -> impl Iterator<Item = Res<Token<'a>>> {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Error<'a> {
+    UnknownToken(&'a str),
+    UnterminatedString(usize),
+}
+
+pub fn aggregator<'a>(source: &'a str) -> impl Iterator<Item = Res<'a, Token<'a>>> {
     Aggregator {
         source,
         tokenizer: tokenizer::tokenize(source).peekable(),
@@ -30,7 +30,11 @@ impl<'a, I> Aggregator<'a, I>
 where
     I: Iterator<Item = tokenizer::Token<'a>>,
 {
-    fn parse_string(&mut self, string_type: StringType, opening: Range<usize>) -> Res<Token<'a>> {
+    fn parse_string(
+        &mut self,
+        string_type: StringType,
+        opening: Range<usize>,
+    ) -> Res<'a, Token<'a>> {
         let closing = loop {
             let Some(tokenizer::Token {
                 token,
@@ -38,10 +42,7 @@ where
                 token_type,
             }) = self.tokenizer.next()
             else {
-                return err!(
-                    "Unterminated string literal starting at byte {}",
-                    opening.start
-                );
+                return Err(Error::UnterminatedString(opening.start));
             };
 
             if matches!(token_type, tokenizer::TokenType::Punctuation) && matches!(token, "\"") {
@@ -63,7 +64,7 @@ impl<'a, I> Iterator for Aggregator<'a, I>
 where
     I: Iterator<Item = tokenizer::Token<'a>>,
 {
-    type Item = Res<Token<'a>>;
+    type Item = Res<'a, Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Helper macro to peek and match on next token
@@ -109,7 +110,7 @@ where
                             }
                         }
                     }
-                    _ => break Some(err!("Unknown whitespace character: {:?}", token)),
+                    token => break Some(Err(Error::UnknownToken(token))),
                 },
                 tokenizer::TokenType::Keyword => match token {
                     "fn" => TokenType::Function,
@@ -198,9 +199,9 @@ where
                     "]" => TokenType::Brace(Brace::Square, BraceDirection::Close),
                     "{" => TokenType::Brace(Brace::Curly, BraceDirection::Open),
                     "}" => TokenType::Brace(Brace::Curly, BraceDirection::Close),
-                    _ => break Some(err!("Unknown punctuation: {:?}", token)),
+                    token => break Some(Err(Error::UnknownToken(token))),
                 },
-                tokenizer::TokenType::Unknown => break Some(err!("Unknown token: {:?}", token)),
+                tokenizer::TokenType::Unknown => break Some(Err(Error::UnknownToken(token))),
             };
 
             break Some(Ok(Token { token_type, range }));
