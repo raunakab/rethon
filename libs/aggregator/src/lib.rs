@@ -59,6 +59,15 @@ where
                 tokenizer::TokenType::Whitespace => match token {
                     "\n" => TokenType::Newline,
                     "\t" => TokenType::Tab,
+                    " " => {
+                        let mut count = 1usize;
+                        loop {
+                            peek! {
+                                (" ", ..) => count = count.checked_add(1).unwrap(),
+                                _ => break TokenType::Whitespace(count),
+                            }
+                        }
+                    }
                     _ => continue, // Skip other whitespace (spaces, etc.)
                 },
                 tokenizer::TokenType::Keyword => match token {
@@ -160,6 +169,7 @@ pub enum TokenType<'a> {
     // Control
     Newline,
     Tab,
+    Whitespace(usize),
 
     // Identifiers
     MacroIdentifier(&'a str),

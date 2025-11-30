@@ -55,46 +55,82 @@ use crate::{Brace, BraceDirection, Token, TokenType, aggregator};
 ])]
 #[case("fn add(x, y) { return x + y; }", vec![
     TokenType::Function,
+    TokenType::Whitespace(1),
     TokenType::Identifier("add"),
     TokenType::Brace(Brace::Round, BraceDirection::Open),
     TokenType::Identifier("x"),
+    TokenType::Whitespace(1),
     TokenType::Identifier("y"),
     TokenType::Brace(Brace::Round, BraceDirection::Close),
+    TokenType::Whitespace(1),
     TokenType::Brace(Brace::Curly, BraceDirection::Open),
+    TokenType::Whitespace(1),
     TokenType::Return,
+    TokenType::Whitespace(1),
     TokenType::Identifier("x"),
+    TokenType::Whitespace(1),
     TokenType::Plus,
+    TokenType::Whitespace(1),
     TokenType::Identifier("y"),
+    TokenType::Whitespace(1),
     TokenType::Brace(Brace::Curly, BraceDirection::Close),
 ])]
 #[case("x = 12.5", vec![
     TokenType::Identifier("x"),
+    TokenType::Whitespace(1),
     TokenType::Assignment,
+    TokenType::Whitespace(1),
     TokenType::Float("12", Some("5")),
 ])]
 #[case("!macrocall", vec![TokenType::MacroIdentifier("macrocall")])]
 #[case("if true { x } else { y }", vec![
     TokenType::If,
+    TokenType::Whitespace(1),
     TokenType::True,
+    TokenType::Whitespace(1),
     TokenType::Brace(Brace::Curly, BraceDirection::Open),
+    TokenType::Whitespace(1),
     TokenType::Identifier("x"),
+    TokenType::Whitespace(1),
     TokenType::Brace(Brace::Curly, BraceDirection::Close),
+    TokenType::Whitespace(1),
     TokenType::Else,
+    TokenType::Whitespace(1),
     TokenType::Brace(Brace::Curly, BraceDirection::Open),
+    TokenType::Whitespace(1),
     TokenType::Identifier("y"),
+    TokenType::Whitespace(1),
     TokenType::Brace(Brace::Curly, BraceDirection::Close),
 ])]
 #[case("a .. b", vec![
     TokenType::Identifier("a"),
+    TokenType::Whitespace(1),
     TokenType::DoubleDot,
+    TokenType::Whitespace(1),
     TokenType::Identifier("b"),
 ])]
 #[case("x |> f |>> g", vec![
     TokenType::Identifier("x"),
+    TokenType::Whitespace(1),
     TokenType::PipeForward,
+    TokenType::Whitespace(1),
     TokenType::Identifier("f"),
+    TokenType::Whitespace(1),
     TokenType::PipeDoubleForward,
+    TokenType::Whitespace(1),
     TokenType::Identifier("g"),
+])]
+#[case("a  b", vec![
+    TokenType::Identifier("a"),
+    TokenType::Whitespace(2),
+    TokenType::Identifier("b"),
+])]
+#[case("x   =   y", vec![
+    TokenType::Identifier("x"),
+    TokenType::Whitespace(3),
+    TokenType::Assignment,
+    TokenType::Whitespace(3),
+    TokenType::Identifier("y"),
 ])]
 fn test(#[case] source: &str, #[case] expected: Vec<TokenType>) {
     assert_eq!(
