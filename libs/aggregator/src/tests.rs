@@ -1,4 +1,4 @@
-use crate::{Brace, BraceDirection, Res, TokenType, aggregator};
+use crate::{Brace, BraceDirection, Res, StringType, TokenType, aggregator};
 
 #[rstest::rstest]
 #[case("", Ok(vec![]))]
@@ -82,6 +82,25 @@ use crate::{Brace, BraceDirection, Res, TokenType, aggregator};
     TokenType::Whitespace(1),
     TokenType::Float("12", Some("5")),
 ]))]
+#[case("\"hello\"", Ok(vec![
+    TokenType::String("\"hello\"", StringType::Normal),
+]))]
+#[case("x = \"value\"", Ok(vec![
+    TokenType::Identifier("x"),
+    TokenType::Whitespace(1),
+    TokenType::Assignment,
+    TokenType::Whitespace(1),
+    TokenType::String("\"value\"", StringType::Normal),
+]))]
+#[case("f\"value ${name}\"", Ok(vec![
+    TokenType::String("f\"value ${name}\"", StringType::Formatted),
+]))]
+#[case("print(f\"value: ${value}\")", Ok(vec![
+    TokenType::Identifier("print"),
+    TokenType::Brace(Brace::Round, BraceDirection::Open),
+    TokenType::String("f\"value: ${value}\"", StringType::Formatted),
+    TokenType::Brace(Brace::Round, BraceDirection::Close),
+]))]
 #[case("!macrocall", Ok(vec![TokenType::MacroIdentifier("macrocall")]))]
 #[case("if true { x } else { y }", Ok(vec![
     TokenType::If,
@@ -132,7 +151,19 @@ use crate::{Brace, BraceDirection, Res, TokenType, aggregator};
     TokenType::Whitespace(3),
     TokenType::Identifier("y"),
 ]))]
-fn test_valid(#[case] source: &str, #[case] expected: Res<Vec<TokenType>>) {
+#[case(
+    "\"",
+    Err(String::from("Unterminated string literal starting at byte 0"))
+)]
+#[case(
+    "x = \"unterminated",
+    Err(String::from("Unterminated string literal starting at byte 4"))
+)]
+#[case(
+    "f\"unterminated ${name}",
+    Err(String::from("Unterminated string literal starting at byte 0"))
+)]
+fn test_tokenization(#[case] source: &str, #[case] expected: Res<Vec<TokenType>>) {
     assert_eq!(
         aggregator(source)
             .map(|token| {
