@@ -95,7 +95,11 @@ use crate::{Token, TokenType, tokenize};
 fn test(#[case] source: &str, #[case] expected: Vec<(&str, TokenType)>) {
     assert_eq!(
         tokenize(source)
-            .map(|Token { token, token_type }| (token, token_type))
+            .map(
+                |Token {
+                     token, token_type, ..
+                 }| (token, token_type)
+            )
             .collect::<Vec<_>>(),
         expected
     );
