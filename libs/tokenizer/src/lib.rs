@@ -6,23 +6,17 @@ use std::ops::Range;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 
 pub fn tokenize(source: &str) -> impl Iterator<Item = Token<'_>> {
-    Tokenizer::from(source)
+    Tokenizer {
+        source,
+        iter: source.grapheme_indices(true),
+        iter_state: None,
+    }
 }
 
 struct Tokenizer<'a> {
     source: &'a str,
     iter: GraphemeIndices<'a>,
     iter_state: Option<(usize, TokenType)>,
-}
-
-impl<'a> From<&'a str> for Tokenizer<'a> {
-    fn from(source: &'a str) -> Self {
-        return Self {
-            source,
-            iter: source.grapheme_indices(true),
-            iter_state: None,
-        };
-    }
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
