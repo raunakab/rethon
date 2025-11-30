@@ -211,8 +211,8 @@ where
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Token<'a> {
-    token_type: TokenType<'a>,
-    range: Range<usize>,
+    pub token_type: TokenType<'a>,
+    pub range: Range<usize>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
