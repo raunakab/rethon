@@ -85,22 +85,22 @@ use crate::{Brace, BraceDirection, Res, StringType, TokenType, aggregator};
     TokenType::Float("12", Some("5")),
 ]))]
 #[case("\"hello\"", Ok(vec![
-    TokenType::String("\"hello\"", StringType::Normal),
+    TokenType::String("hello", StringType::Normal),
 ]))]
 #[case("x = \"value\"", Ok(vec![
     TokenType::Identifier("x"),
     TokenType::Whitespace(1),
     TokenType::Assignment,
     TokenType::Whitespace(1),
-    TokenType::String("\"value\"", StringType::Normal),
+    TokenType::String("value", StringType::Normal),
 ]))]
 #[case("f\"value ${name}\"", Ok(vec![
-    TokenType::String("f\"value ${name}\"", StringType::Formatted),
+    TokenType::String("value ${name}", StringType::Formatted),
 ]))]
 #[case("print(f\"value: ${value}\")", Ok(vec![
     TokenType::Identifier("print"),
     TokenType::Brace(Brace::Round, BraceDirection::Open),
-    TokenType::String("f\"value: ${value}\"", StringType::Formatted),
+    TokenType::String("value: ${value}", StringType::Formatted),
     TokenType::Brace(Brace::Round, BraceDirection::Close),
 ]))]
 #[case("!macrocall", Ok(vec![TokenType::MacroIdentifier("macrocall")]))]
@@ -163,7 +163,7 @@ use crate::{Brace, BraceDirection, Res, StringType, TokenType, aggregator};
 )]
 #[case(
     "f\"unterminated ${name}",
-    Err(String::from("Unterminated string literal starting at byte 0"))
+    Err(String::from("Unterminated string literal starting at byte 1"))
 )]
 fn test_tokenization(#[case] source: &str, #[case] expected: Res<Vec<TokenType>>) {
     assert_eq!(

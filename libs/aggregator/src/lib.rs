@@ -49,7 +49,7 @@ where
             }
         };
 
-        let range = opening.start..closing.end;
+        let range = opening.end..closing.start;
         let content = &self.source[range.clone()];
 
         Ok(Token {
@@ -71,7 +71,7 @@ where
         // Automatically wraps tuple patterns in Some()
         macro_rules! peek {
             ($(($($inner:tt)*) => $result:expr),+ $(, _ => $default:expr)? $(,)?) => {{
-                let next_token = self.tokenizer.peek().map(|t| (t.token, t.token_type));
+                let next_token = self.tokenizer.peek().map(|t| (t.token, t.range.clone(), t.token_type));
                 match next_token {
                     $(
                         Some(($($inner)*)) => {
@@ -128,7 +128,7 @@ where
 
                     // string-formatting
                     "f" => peek! {
-                        ("\"", ..) => break Some(self.parse_string(StringType::Formatted, range)),
+                        ("\"", string_range, _) => break Some(self.parse_string(StringType::Formatted, string_range)),
                         _ => TokenType::Identifier(token),
                     },
                     _ => TokenType::Identifier(token),
@@ -136,7 +136,7 @@ where
                 tokenizer::TokenType::Numeric => peek! {
                     (".", ..) => {
                         peek! {
-                            (fraction, tokenizer::TokenType::Numeric) => TokenType::Float(token, Some(fraction)),
+                            (fraction, _, tokenizer::TokenType::Numeric) => TokenType::Float(token, Some(fraction)),
                             _ => TokenType::Float(token, None),
                         }
                     },
@@ -151,7 +151,7 @@ where
                         _ => TokenType::Assignment,
                     },
                     "!" => peek! {
-                        (ident, tokenizer::TokenType::Keyword) => TokenType::MacroIdentifier(ident),
+                        (ident, _, tokenizer::TokenType::Keyword) => TokenType::MacroIdentifier(ident),
                         _ => TokenType::Promotion,
                     },
                     "?" => TokenType::Coalescence,
