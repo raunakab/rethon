@@ -93,7 +93,6 @@ where
             let token_type = match token_type {
                 L1TokenType::Whitespace => match token {
                     "\n" => TokenType::Newline,
-                    "\t" => TokenType::Tab,
                     " " => {
                         let mut count = 1usize;
                         loop {
@@ -103,7 +102,7 @@ where
                             }
                         }
                     }
-                    token => break Some(Err(Error::UnknownToken(token.to_string()))),
+                    token => break Some(Err(Error::InvalidWhitespace(token.to_string()))),
                 },
                 L1TokenType::Keyword => match token {
                     "fn" => TokenType::Function,

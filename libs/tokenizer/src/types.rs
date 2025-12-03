@@ -25,7 +25,6 @@ pub struct Token<'a> {
 pub enum TokenType<'a> {
     // Control
     Newline,           // \n
-    Tab,               // \t
     Whitespace(usize), // ` `; also keeps a track of the number of consecutive whitespace chars
     Semicolon,         // ;
     Comma,             // ,

@@ -45,17 +45,19 @@ use crate::{
 #[case("{", Ok(vec![TokenType::Brace(Brace::Curly, BraceDirection::Open)]))]
 #[case("}", Ok(vec![TokenType::Brace(Brace::Curly, BraceDirection::Close)]))]
 #[case("\n", Ok(vec![TokenType::Newline]))]
-#[case("\t", Ok(vec![TokenType::Tab]))]
+#[case(
+    "\t",
+    Err(Error::InvalidWhitespace("\t".to_string()))
+)]
 #[case("a\nb", Ok(vec![
     TokenType::Identifier("a"),
     TokenType::Newline,
     TokenType::Identifier("b"),
 ]))]
-#[case("a\tb", Ok(vec![
-    TokenType::Identifier("a"),
-    TokenType::Tab,
-    TokenType::Identifier("b"),
-]))]
+#[case(
+    "a\tb",
+    Err(Error::InvalidWhitespace("\t".to_string()))
+)]
 #[case("fn add(x, y) { return x + y; }", Ok(vec![
     TokenType::Function,
     TokenType::Whitespace(1),
@@ -159,7 +161,7 @@ use crate::{
 #[case("\"", Err(Error::UnterminatedString(0)))]
 #[case("x = \"unterminated", Err(Error::UnterminatedString(4)))]
 #[case("f\"unterminated ${name}", Err(Error::UnterminatedString(1)))]
-fn test_tokenization(#[case] source: &str, #[case] expected: Res<Vec<TokenType>>) {
+fn test_l2_tokenization(#[case] source: &str, #[case] expected: Res<Vec<TokenType>>) {
     assert_eq!(
         l2_tokenize(source)
             .map(|token| {
