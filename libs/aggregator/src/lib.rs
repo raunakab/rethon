@@ -15,7 +15,7 @@ pub enum Error {
     UnterminatedString(usize),
 }
 
-pub fn aggregator<'a>(source: &'a str) -> impl Iterator<Item = Res<Token<'a>>> {
+pub fn aggregator(source: &str) -> impl Iterator<Item = Res<Token<'_>>> {
     Aggregator {
         source,
         tokenizer: tokenizer::tokenize(source).peekable(),
@@ -126,6 +126,11 @@ where
                     "else" => TokenType::Else,
                     "true" => TokenType::True,
                     "false" => TokenType::False,
+                    "struct" => TokenType::Struct,
+                    "enum" => TokenType::Enum,
+                    "panic" => TokenType::Panic,
+                    "todo" => TokenType::Todo,
+                    "unimplemented" => TokenType::Unimplemented,
 
                     // string-formatting
                     "f" => peek! {
@@ -234,19 +239,24 @@ pub enum TokenType<'a> {
     Float(&'a str, Option<&'a str>),
 
     // Keywords
-    Function, // fn
-    Scope,    // scope
-    Return,   // return
-    Yield,    // yield
-    Not,      // not
-    And,      // and
-    Or,       // or
-    For,      // for
-    Loop,     // loop
-    If,       // if
-    Else,     // else
-    True,     // true
-    False,    // false
+    Function,      // fn
+    Scope,         // scope
+    Return,        // return
+    Yield,         // yield
+    Not,           // not
+    And,           // and
+    Or,            // or
+    For,           // for
+    Loop,          // loop
+    If,            // if
+    Else,          // else
+    True,          // true
+    False,         // false
+    Struct,        // struct
+    Enum,          // enum
+    Panic,         // panic
+    Todo,          // todo
+    Unimplemented, // unimplemented
 
     // Operators
     ConstantAssignment, // :=
