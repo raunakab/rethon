@@ -24,7 +24,7 @@ pub enum Error {
     UnterminatedBlock { brace: Brace },
 }
 
-pub fn structurizer<'a>(source: &'a str) -> Res<Structure<'a>> {
+pub fn structurizer(source: &str) -> Res<Structure<'_>> {
     let mut tokens = aggregate_tokens(source).peekable();
     build_structure(&mut tokens, None)
 }
