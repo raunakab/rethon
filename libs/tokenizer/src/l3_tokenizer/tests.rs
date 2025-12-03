@@ -1,6 +1,8 @@
-use crate::{Res, l2_tokenizer::L2TokenType};
-
-use super::{L3Token, l3_tokenize};
+use crate::{
+    Res,
+    l2_tokenizer::L2TokenType,
+    l3_tokenizer::{L3Token, l3_tokenize},
+};
 
 #[test]
 fn test_single_line() {
