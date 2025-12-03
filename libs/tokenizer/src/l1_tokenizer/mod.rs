@@ -5,7 +5,7 @@ use std::ops::Range;
 
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 
-pub fn l1_tokenize(source: &str) -> impl Iterator<Item = L1Token<'_>> {
+pub(crate) fn l1_tokenize(source: &str) -> impl Iterator<Item = L1Token<'_>> {
     L1Tokenizer {
         source,
         iter: source.grapheme_indices(true),
@@ -61,14 +61,14 @@ impl<'a> Iterator for L1Tokenizer<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct L1Token<'a> {
-    pub token: &'a str,
-    pub range: Range<usize>,
-    pub token_type: L1TokenType,
+pub(crate) struct L1Token<'a> {
+    pub(crate) token: &'a str,
+    pub(crate) range: Range<usize>,
+    pub(crate) token_type: L1TokenType,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum L1TokenType {
+pub(crate) enum L1TokenType {
     Whitespace,
     Keyword,
     Numeric,

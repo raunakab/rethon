@@ -8,7 +8,7 @@ use crate::{
     l1_tokenizer::{L1Token, L1TokenType, l1_tokenize},
 };
 
-pub fn l2_tokenize(source: &str) -> impl Iterator<Item = Res<L2Token<'_>>> {
+pub(crate) fn l2_tokenize(source: &str) -> impl Iterator<Item = Res<L2Token<'_>>> {
     let iter = l1_tokenize(source).peekable();
     L2Tokenizer { source, iter }
 }
@@ -210,9 +210,9 @@ where
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct L2Token<'a> {
-    pub token_type: L2TokenType<'a>,
-    pub range: Range<usize>,
+pub(crate) struct L2Token<'a> {
+    pub(crate) token_type: L2TokenType<'a>,
+    pub(crate) range: Range<usize>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
