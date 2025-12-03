@@ -1,4 +1,15 @@
-pub fn parser(source: &str) -> Scope {
+use thiserror::Error;
+
+type Res<T = ()> = Result<T, Error>;
+
+#[derive(Clone, Debug, PartialEq, Eq, Error)]
+pub enum Error {
+    #[error(transparent)]
+    Structurizer(#[from] structurizer::Error),
+}
+
+pub fn parser(source: &str) -> Res<Scope> {
+    let nodes = structurizer::structurizer(source)?;
     todo!()
 }
 
