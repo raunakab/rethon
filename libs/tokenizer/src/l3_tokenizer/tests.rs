@@ -1,134 +1,306 @@
+use std::ops::Range;
+
 use crate::{
-    Res,
+    Error, Res,
     l2_tokenizer::L2TokenType,
     l3_tokenizer::{L3Token, l3_tokenize},
 };
 
-#[test]
-fn test_single_line() {
-    let source = "fn add";
-    let tokens: Res<Vec<L3Token>> = l3_tokenize(source).collect();
-    let tokens = tokens.unwrap();
-
-    assert_eq!(tokens.len(), 3); // "fn", " ", "add"
-
-    // First token: "fn"
-    assert_eq!(tokens[0].line, 0);
-    assert_eq!(tokens[0].indentation_level, 0);
-    assert_eq!(tokens[0].line_range, 0..2);
-    assert!(matches!(tokens[0].token_type, L2TokenType::Function));
-
-    // Second token: " "
-    assert_eq!(tokens[1].line, 0);
-    assert_eq!(tokens[1].indentation_level, 0);
-
-    // Third token: "add"
-    assert_eq!(tokens[2].line, 0);
-    assert_eq!(tokens[2].indentation_level, 0);
-    assert_eq!(tokens[2].line_range, 3..6);
+// Simplified token type for easier testing (strips ranges and source positions)
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct SimpleL3Token<'a> {
+    token_type: L2TokenType<'a>,
+    line: usize,
+    line_range: Range<usize>,
+    indentation_level: usize,
 }
 
-#[test]
-fn test_multiple_lines() {
-    let source = "fn add\nreturn";
-    let tokens: Res<Vec<L3Token>> = l3_tokenize(source).collect();
-    let tokens = tokens.unwrap();
-
-    // Find the newline and verify line tracking
-    let newline_idx = tokens
-        .iter()
-        .position(|t| matches!(t.token_type, L2TokenType::Newline))
-        .unwrap();
-    assert_eq!(tokens[newline_idx].line, 0);
-
-    // Token after newline should be on line 1
-    let return_idx = tokens
-        .iter()
-        .position(|t| matches!(t.token_type, L2TokenType::Return))
-        .unwrap();
-    assert_eq!(tokens[return_idx].line, 1);
-    assert_eq!(tokens[return_idx].line_range.start, 0);
-}
-
-#[test]
-fn test_indentation() {
-    let source = "fn\n    add";
-    let tokens: Res<Vec<L3Token>> = l3_tokenize(source).collect();
-    let tokens = tokens.unwrap();
-
-    // Find the whitespace after newline
-    let mut found_indented = false;
-    for token in &tokens {
-        if token.line == 1 {
-            if let L2TokenType::Whitespace(4) = token.token_type {
-                assert_eq!(token.indentation_level, 1);
-                found_indented = true;
-            } else if matches!(token.token_type, L2TokenType::Identifier("add")) {
-                // "add" should have indentation_level 1 (inherited from whitespace)
-                assert_eq!(token.indentation_level, 1);
-            }
-        }
-    }
-    assert!(found_indented);
-}
-
-#[test]
-fn test_nested_indentation() {
-    let source = "fn\n    if\n        x";
-    let tokens: Res<Vec<L3Token>> = l3_tokenize(source).collect();
-    let tokens = tokens.unwrap();
-
-    // Find tokens on each line
-    for token in &tokens {
-        match token.line {
-            0 => assert_eq!(token.indentation_level, 0),
-            1 => {
-                if !matches!(token.token_type, L2TokenType::Newline) {
-                    assert_eq!(token.indentation_level, 1);
-                }
-            }
-            2 => {
-                if !matches!(token.token_type, L2TokenType::Newline) {
-                    assert_eq!(token.indentation_level, 2);
-                }
-            }
-            _ => {}
+impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
+    fn from(token: L3Token<'a>) -> Self {
+        SimpleL3Token {
+            token_type: token.token_type,
+            line: token.line,
+            line_range: token.line_range,
+            indentation_level: token.indentation_level,
         }
     }
 }
 
-#[test]
-fn test_invalid_indentation() {
-    let source = "fn\n   add"; // 3 spaces, not a multiple of 4
-    let tokens: Res<Vec<L3Token>> = l3_tokenize(source).collect();
-
-    assert!(tokens.is_err());
-}
-
-#[test]
-fn test_line_range_tracking() {
-    let source = "abc def\nghi";
-    let tokens: Res<Vec<L3Token>> = l3_tokenize(source).collect();
-    let tokens = tokens.unwrap();
-
-    // First line: "abc" should be at 0..3, "def" at 4..7
-    let abc = tokens
-        .iter()
-        .find(|t| matches!(t.token_type, L2TokenType::Identifier("abc")))
-        .unwrap();
-    assert_eq!(abc.line_range, 0..3);
-
-    let def = tokens
-        .iter()
-        .find(|t| matches!(t.token_type, L2TokenType::Identifier("def")))
-        .unwrap();
-    assert_eq!(def.line_range, 4..7);
-
-    // Second line: "ghi" should be at 0..3 (line-relative)
-    let ghi = tokens
-        .iter()
-        .find(|t| matches!(t.token_type, L2TokenType::Identifier("ghi")))
-        .unwrap();
-    assert_eq!(ghi.line, 1);
-    assert_eq!(ghi.line_range, 0..3);
+#[rstest::rstest]
+// Empty input
+#[case("", Ok(vec![]))]
+// Single token on single line
+#[case(
+    "fn",
+    Ok(vec![
+        SimpleL3Token {
+            token_type: L2TokenType::Function,
+            line: 0,
+            line_range: 0..2,
+            indentation_level: 0,
+        },
+    ])
+)]
+// Multiple tokens on single line
+#[case(
+    "fn add",
+    Ok(vec![
+        SimpleL3Token {
+            token_type: L2TokenType::Function,
+            line: 0,
+            line_range: 0..2,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Whitespace(1),
+            line: 0,
+            line_range: 2..3,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("add"),
+            line: 0,
+            line_range: 3..6,
+            indentation_level: 0,
+        },
+    ])
+)]
+// Multiple lines without indentation
+#[case(
+    "fn add\nreturn",
+    Ok(vec![
+        SimpleL3Token {
+            token_type: L2TokenType::Function,
+            line: 0,
+            line_range: 0..2,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Whitespace(1),
+            line: 0,
+            line_range: 2..3,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("add"),
+            line: 0,
+            line_range: 3..6,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Newline,
+            line: 0,
+            line_range: 6..7,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Return,
+            line: 1,
+            line_range: 0..6,
+            indentation_level: 0,
+        },
+    ])
+)]
+// Single level indentation
+#[case(
+    "fn\n    add",
+    Ok(vec![
+        SimpleL3Token {
+            token_type: L2TokenType::Function,
+            line: 0,
+            line_range: 0..2,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Newline,
+            line: 0,
+            line_range: 2..3,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Whitespace(4),
+            line: 1,
+            line_range: 0..4,
+            indentation_level: 1,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("add"),
+            line: 1,
+            line_range: 4..7,
+            indentation_level: 1,
+        },
+    ])
+)]
+// Nested indentation (2 levels)
+#[case(
+    "fn\n    if\n        x",
+    Ok(vec![
+        SimpleL3Token {
+            token_type: L2TokenType::Function,
+            line: 0,
+            line_range: 0..2,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Newline,
+            line: 0,
+            line_range: 2..3,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Whitespace(4),
+            line: 1,
+            line_range: 0..4,
+            indentation_level: 1,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::If,
+            line: 1,
+            line_range: 4..6,
+            indentation_level: 1,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Newline,
+            line: 1,
+            line_range: 6..7,
+            indentation_level: 1,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Whitespace(8),
+            line: 2,
+            line_range: 0..8,
+            indentation_level: 2,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("x"),
+            line: 2,
+            line_range: 8..9,
+            indentation_level: 2,
+        },
+    ])
+)]
+// Line range resets on new line
+#[case(
+    "abc def\nghi",
+    Ok(vec![
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("abc"),
+            line: 0,
+            line_range: 0..3,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Whitespace(1),
+            line: 0,
+            line_range: 3..4,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("def"),
+            line: 0,
+            line_range: 4..7,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Newline,
+            line: 0,
+            line_range: 7..8,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("ghi"),
+            line: 1,
+            line_range: 0..3,
+            indentation_level: 0,
+        },
+    ])
+)]
+// Indentation resets after newline
+#[case(
+    "fn\n    x\ny",
+    Ok(vec![
+        SimpleL3Token {
+            token_type: L2TokenType::Function,
+            line: 0,
+            line_range: 0..2,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Newline,
+            line: 0,
+            line_range: 2..3,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Whitespace(4),
+            line: 1,
+            line_range: 0..4,
+            indentation_level: 1,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("x"),
+            line: 1,
+            line_range: 4..5,
+            indentation_level: 1,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Newline,
+            line: 1,
+            line_range: 5..6,
+            indentation_level: 1,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("y"),
+            line: 2,
+            line_range: 0..1,
+            indentation_level: 0,
+        },
+    ])
+)]
+// Invalid indentation: 3 spaces (not a multiple of 4)
+#[case("fn\n   add", Err(Error::InvalidIndentation { found: 3, position: 3 }))]
+// Invalid indentation: 5 spaces
+#[case("x\n     y", Err(Error::InvalidIndentation { found: 5, position: 2 }))]
+// Invalid indentation: 2 spaces
+#[case("a\n  b", Err(Error::InvalidIndentation { found: 2, position: 2 }))]
+// Valid 8-space indentation (2 levels)
+#[case(
+    "x\n        y",
+    Ok(vec![
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("x"),
+            line: 0,
+            line_range: 0..1,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Newline,
+            line: 0,
+            line_range: 1..2,
+            indentation_level: 0,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Whitespace(8),
+            line: 1,
+            line_range: 0..8,
+            indentation_level: 2,
+        },
+        SimpleL3Token {
+            token_type: L2TokenType::Identifier("y"),
+            line: 1,
+            line_range: 8..9,
+            indentation_level: 2,
+        },
+    ])
+)]
+fn test_l3_tokenization(#[case] source: &str, #[case] expected: Res<Vec<SimpleL3Token<'static>>>) {
+    assert_eq!(
+        l3_tokenize(source)
+            .map(|token| {
+                let token = token?;
+                Ok(SimpleL3Token::from(token))
+            })
+            .collect::<Res<Vec<_>>>(),
+        expected
+    );
 }
