@@ -1,10 +1,12 @@
 mod l1_tokenizer;
 mod l2_tokenizer;
 mod l3_tokenizer;
+mod l4_tokenizer;
+pub mod types;
 
 use thiserror::Error;
 
-use crate::l3_tokenizer::{INDENTATION_SIZE, L3Token, l3_tokenize};
+use crate::{l3_tokenizer::INDENTATION_SIZE, l4_tokenizer::l4_tokenize, types::Node};
 
 pub type Res<T = ()> = Result<T, Error>;
 
@@ -23,6 +25,6 @@ pub enum Error {
     InvalidIndentation { found: usize, position: usize },
 }
 
-pub fn tokenize(source: &str) -> impl Iterator<Item = Res<L3Token<'_>>> {
-    l3_tokenize(source)
+pub fn tokenize(source: &str) -> Res<Node<'_>> {
+    l4_tokenize(source)
 }

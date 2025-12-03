@@ -6,6 +6,7 @@ use std::{iter::Peekable, ops::Range};
 use crate::{
     Error, Res,
     l1_tokenizer::{L1Token, L1TokenType, l1_tokenize},
+    types::{Brace, BraceDirection, StringType, TokenType},
 };
 
 pub(crate) fn l2_tokenize(source: &str) -> impl Iterator<Item = Res<L2Token<'_>>> {
@@ -46,7 +47,7 @@ where
         let content = &self.source[range.clone()];
 
         Ok(L2Token {
-            token_type: L2TokenType::String(content, string_type),
+            token_type: TokenType::String(content, string_type),
             range,
         })
     }
@@ -91,112 +92,112 @@ where
 
             let token_type = match token_type {
                 L1TokenType::Whitespace => match token {
-                    "\n" => L2TokenType::Newline,
-                    "\t" => L2TokenType::Tab,
+                    "\n" => TokenType::Newline,
+                    "\t" => TokenType::Tab,
                     " " => {
                         let mut count = 1usize;
                         loop {
                             peek! {
                                 (" ", ..) => count = count.checked_add(1).unwrap(),
-                                _ => break L2TokenType::Whitespace(count),
+                                _ => break TokenType::Whitespace(count),
                             }
                         }
                     }
                     token => break Some(Err(Error::UnknownToken(token.to_string()))),
                 },
                 L1TokenType::Keyword => match token {
-                    "fn" => L2TokenType::Function,
-                    "scope" => L2TokenType::Scope,
-                    "return" => L2TokenType::Return,
-                    "yield" => L2TokenType::Yield,
-                    "not" => L2TokenType::Not,
-                    "and" => L2TokenType::And,
-                    "or" => L2TokenType::Or,
-                    "for" => L2TokenType::For,
-                    "loop" => L2TokenType::Loop,
-                    "if" => L2TokenType::If,
-                    "else" => L2TokenType::Else,
-                    "true" => L2TokenType::True,
-                    "false" => L2TokenType::False,
-                    "struct" => L2TokenType::Struct,
-                    "enum" => L2TokenType::Enum,
-                    "panic" => L2TokenType::Panic,
-                    "todo" => L2TokenType::Todo,
-                    "unimplemented" => L2TokenType::Unimplemented,
-                    "mut" => L2TokenType::Mutable,
+                    "fn" => TokenType::Function,
+                    "scope" => TokenType::Scope,
+                    "return" => TokenType::Return,
+                    "yield" => TokenType::Yield,
+                    "not" => TokenType::Not,
+                    "and" => TokenType::And,
+                    "or" => TokenType::Or,
+                    "for" => TokenType::For,
+                    "loop" => TokenType::Loop,
+                    "if" => TokenType::If,
+                    "else" => TokenType::Else,
+                    "true" => TokenType::True,
+                    "false" => TokenType::False,
+                    "struct" => TokenType::Struct,
+                    "enum" => TokenType::Enum,
+                    "panic" => TokenType::Panic,
+                    "todo" => TokenType::Todo,
+                    "unimplemented" => TokenType::Unimplemented,
+                    "mut" => TokenType::Mutable,
 
                     // string-formatting
                     "f" => peek! {
                         ("\"", string_range, _) => break Some(self.parse_string(StringType::Formatted, string_range)),
-                        _ => L2TokenType::Identifier(token),
+                        _ => TokenType::Identifier(token),
                     },
-                    _ => L2TokenType::Identifier(token),
+                    _ => TokenType::Identifier(token),
                 },
                 L1TokenType::Numeric => peek! {
                     (".", ..) => {
                         peek! {
-                            (fraction, _, L1TokenType::Numeric) => L2TokenType::Float(token, Some(fraction)),
-                            _ => L2TokenType::Float(token, None),
+                            (fraction, _, L1TokenType::Numeric) => TokenType::Float(token, Some(fraction)),
+                            _ => TokenType::Float(token, None),
                         }
                     },
-                    _ => L2TokenType::Number(token),
+                    _ => TokenType::Number(token),
                 },
                 L1TokenType::Punctuation => match token {
-                    ";" => L2TokenType::Semicolon,
-                    "," => L2TokenType::Comma,
+                    ";" => TokenType::Semicolon,
+                    "," => TokenType::Comma,
                     "\"" => break Some(self.parse_string(StringType::Normal, range)),
                     "=" => peek! {
-                        ("=", ..) => L2TokenType::Equals,
-                        _ => L2TokenType::Assignment,
+                        ("=", ..) => TokenType::Equals,
+                        _ => TokenType::Assignment,
                     },
                     "!" => peek! {
-                        (ident, _, L1TokenType::Keyword) => L2TokenType::MacroIdentifier(ident),
-                        _ => L2TokenType::Promotion,
+                        (ident, _, L1TokenType::Keyword) => TokenType::MacroIdentifier(ident),
+                        _ => TokenType::Promotion,
                     },
-                    "?" => L2TokenType::Coalescence,
-                    "@" => L2TokenType::Ampersand,
+                    "?" => TokenType::Coalescence,
+                    "@" => TokenType::Ampersand,
                     ":" => peek! {
-                        ("=", ..) => L2TokenType::ConstantAssignment,
-                        _ => L2TokenType::Colon,
+                        ("=", ..) => TokenType::ConstantAssignment,
+                        _ => TokenType::Colon,
                     },
                     "." => peek! {
-                        (".", ..) => L2TokenType::DoubleDot,
-                        _ => L2TokenType::Dot,
+                        (".", ..) => TokenType::DoubleDot,
+                        _ => TokenType::Dot,
                     },
-                    "+" => L2TokenType::Plus,
+                    "+" => TokenType::Plus,
                     "-" => peek! {
-                        ("-", ..) => L2TokenType::DoubleMinus,
-                        (">", ..) => L2TokenType::Arrow,
-                        _ => L2TokenType::Minus,
+                        ("-", ..) => TokenType::DoubleMinus,
+                        (">", ..) => TokenType::Arrow,
+                        _ => TokenType::Minus,
                     },
                     "*" => peek! {
-                        ("*", ..) => L2TokenType::DoubleAsterisk,
-                        _ => L2TokenType::Asterisk,
+                        ("*", ..) => TokenType::DoubleAsterisk,
+                        _ => TokenType::Asterisk,
                     },
-                    "/" => L2TokenType::Slash,
+                    "/" => TokenType::Slash,
                     "|" => peek! {
                         (">", ..) => peek! {
-                            (">", ..) => L2TokenType::PipeDoubleForward,
-                            _ => L2TokenType::PipeForward,
+                            (">", ..) => TokenType::PipeDoubleForward,
+                            _ => TokenType::PipeForward,
                         },
-                        _ => L2TokenType::Pipe,
+                        _ => TokenType::Pipe,
                     },
                     ">" => peek! {
-                        ("=", ..) => L2TokenType::GreaterOrEqual,
-                        (">", ..) => L2TokenType::DoubleGreater,
-                        _ => L2TokenType::Greater,
+                        ("=", ..) => TokenType::GreaterOrEqual,
+                        (">", ..) => TokenType::DoubleGreater,
+                        _ => TokenType::Greater,
                     },
                     "<" => peek! {
-                        ("=", ..) => L2TokenType::LesserOrEqual,
-                        ("<", ..) => L2TokenType::DoubleLesser,
-                        _ => L2TokenType::Lesser,
+                        ("=", ..) => TokenType::LesserOrEqual,
+                        ("<", ..) => TokenType::DoubleLesser,
+                        _ => TokenType::Lesser,
                     },
-                    "(" => L2TokenType::Brace(Brace::Round, BraceDirection::Open),
-                    ")" => L2TokenType::Brace(Brace::Round, BraceDirection::Close),
-                    "[" => L2TokenType::Brace(Brace::Square, BraceDirection::Open),
-                    "]" => L2TokenType::Brace(Brace::Square, BraceDirection::Close),
-                    "{" => L2TokenType::Brace(Brace::Curly, BraceDirection::Open),
-                    "}" => L2TokenType::Brace(Brace::Curly, BraceDirection::Close),
+                    "(" => TokenType::Brace(Brace::Round, BraceDirection::Open),
+                    ")" => TokenType::Brace(Brace::Round, BraceDirection::Close),
+                    "[" => TokenType::Brace(Brace::Square, BraceDirection::Open),
+                    "]" => TokenType::Brace(Brace::Square, BraceDirection::Close),
+                    "{" => TokenType::Brace(Brace::Curly, BraceDirection::Open),
+                    "}" => TokenType::Brace(Brace::Curly, BraceDirection::Close),
                     token => break Some(Err(Error::UnknownToken(token.to_string()))),
                 },
                 L1TokenType::Unknown => {
@@ -211,93 +212,6 @@ where
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct L2Token<'a> {
-    pub(crate) token_type: L2TokenType<'a>,
+    pub(crate) token_type: TokenType<'a>,
     pub(crate) range: Range<usize>,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum L2TokenType<'a> {
-    // Control
-    Newline,           // \n
-    Tab,               // \t
-    Whitespace(usize), // ` `; also keeps a track of the number of consecutive whitespace chars
-    Semicolon,         // ;
-    Comma,             // ,
-
-    // Identifiers
-    MacroIdentifier(&'a str),
-    Identifier(&'a str),
-    String(&'a str, StringType),
-    Number(&'a str),
-    Float(&'a str, Option<&'a str>),
-
-    // Keywords
-    Function,      // fn
-    Scope,         // scope
-    Return,        // return
-    Yield,         // yield
-    Not,           // not
-    And,           // and
-    Or,            // or
-    For,           // for
-    Loop,          // loop
-    If,            // if
-    Else,          // else
-    True,          // true
-    False,         // false
-    Struct,        // struct
-    Enum,          // enum
-    Panic,         // panic
-    Todo,          // todo
-    Unimplemented, // unimplemented
-    Mutable,       // mut
-
-    // Operators
-    ConstantAssignment, // :=
-    Assignment,         // =
-    Equals,             // ==
-    Promotion,          // !
-    Coalescence,        // ?
-    Ampersand,          // @
-    Colon,              // :
-    Dot,                // .
-    DoubleDot,          // ..
-    Plus,               // +
-    Minus,              // -
-    DoubleMinus,        // --
-    Arrow,              // ->
-    Asterisk,           // *
-    DoubleAsterisk,     // **
-    Slash,              // /
-    Pipe,               // |
-    PipeForward,        // |>
-    PipeDoubleForward,  // |>>
-    Greater,            // >
-    DoubleGreater,      // >>
-    GreaterOrEqual,     // >=
-    Lesser,             // <
-    DoubleLesser,       // <<
-    LesserOrEqual,      // <=
-
-    // Braces
-    Brace(Brace, BraceDirection),
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Brace {
-    Round,
-    Square,
-    Curly,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum BraceDirection {
-    Open,
-    Close,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum StringType {
-    Normal,
-    Formatted,
 }

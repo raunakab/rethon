@@ -2,21 +2,21 @@ use std::ops::Range;
 
 use crate::{
     Error, Res,
-    l2_tokenizer::L2TokenType,
-    l3_tokenizer::{L3Token, l3_tokenize},
+    l3_tokenizer::{Token, l3_tokenize},
+    types::TokenType,
 };
 
 // Simplified token type for easier testing (strips ranges and source positions)
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct SimpleL3Token<'a> {
-    token_type: L2TokenType<'a>,
+    token_type: TokenType<'a>,
     line: usize,
     line_range: Range<usize>,
     indentation_level: usize,
 }
 
-impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
-    fn from(token: L3Token<'a>) -> Self {
+impl<'a> From<Token<'a>> for SimpleL3Token<'a> {
+    fn from(token: Token<'a>) -> Self {
         SimpleL3Token {
             token_type: token.token_type,
             line: token.line,
@@ -34,7 +34,7 @@ impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
     "fn",
     Ok(vec![
         SimpleL3Token {
-            token_type: L2TokenType::Function,
+            token_type: TokenType::Function,
             line: 0,
             line_range: 0..2,
             indentation_level: 0,
@@ -46,19 +46,19 @@ impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
     "fn add",
     Ok(vec![
         SimpleL3Token {
-            token_type: L2TokenType::Function,
+            token_type: TokenType::Function,
             line: 0,
             line_range: 0..2,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Whitespace(1),
+            token_type: TokenType::Whitespace(1),
             line: 0,
             line_range: 2..3,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("add"),
+            token_type: TokenType::Identifier("add"),
             line: 0,
             line_range: 3..6,
             indentation_level: 0,
@@ -70,31 +70,31 @@ impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
     "fn add\nreturn",
     Ok(vec![
         SimpleL3Token {
-            token_type: L2TokenType::Function,
+            token_type: TokenType::Function,
             line: 0,
             line_range: 0..2,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Whitespace(1),
+            token_type: TokenType::Whitespace(1),
             line: 0,
             line_range: 2..3,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("add"),
+            token_type: TokenType::Identifier("add"),
             line: 0,
             line_range: 3..6,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Newline,
+            token_type: TokenType::Newline,
             line: 0,
             line_range: 6..7,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Return,
+            token_type: TokenType::Return,
             line: 1,
             line_range: 0..6,
             indentation_level: 0,
@@ -106,25 +106,25 @@ impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
     "fn\n    add",
     Ok(vec![
         SimpleL3Token {
-            token_type: L2TokenType::Function,
+            token_type: TokenType::Function,
             line: 0,
             line_range: 0..2,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Newline,
+            token_type: TokenType::Newline,
             line: 0,
             line_range: 2..3,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Whitespace(4),
+            token_type: TokenType::Whitespace(4),
             line: 1,
             line_range: 0..4,
             indentation_level: 1,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("add"),
+            token_type: TokenType::Identifier("add"),
             line: 1,
             line_range: 4..7,
             indentation_level: 1,
@@ -136,43 +136,43 @@ impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
     "fn\n    if\n        x",
     Ok(vec![
         SimpleL3Token {
-            token_type: L2TokenType::Function,
+            token_type: TokenType::Function,
             line: 0,
             line_range: 0..2,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Newline,
+            token_type: TokenType::Newline,
             line: 0,
             line_range: 2..3,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Whitespace(4),
+            token_type: TokenType::Whitespace(4),
             line: 1,
             line_range: 0..4,
             indentation_level: 1,
         },
         SimpleL3Token {
-            token_type: L2TokenType::If,
+            token_type: TokenType::If,
             line: 1,
             line_range: 4..6,
             indentation_level: 1,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Newline,
+            token_type: TokenType::Newline,
             line: 1,
             line_range: 6..7,
             indentation_level: 1,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Whitespace(8),
+            token_type: TokenType::Whitespace(8),
             line: 2,
             line_range: 0..8,
             indentation_level: 2,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("x"),
+            token_type: TokenType::Identifier("x"),
             line: 2,
             line_range: 8..9,
             indentation_level: 2,
@@ -184,31 +184,31 @@ impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
     "abc def\nghi",
     Ok(vec![
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("abc"),
+            token_type: TokenType::Identifier("abc"),
             line: 0,
             line_range: 0..3,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Whitespace(1),
+            token_type: TokenType::Whitespace(1),
             line: 0,
             line_range: 3..4,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("def"),
+            token_type: TokenType::Identifier("def"),
             line: 0,
             line_range: 4..7,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Newline,
+            token_type: TokenType::Newline,
             line: 0,
             line_range: 7..8,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("ghi"),
+            token_type: TokenType::Identifier("ghi"),
             line: 1,
             line_range: 0..3,
             indentation_level: 0,
@@ -220,37 +220,37 @@ impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
     "fn\n    x\ny",
     Ok(vec![
         SimpleL3Token {
-            token_type: L2TokenType::Function,
+            token_type: TokenType::Function,
             line: 0,
             line_range: 0..2,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Newline,
+            token_type: TokenType::Newline,
             line: 0,
             line_range: 2..3,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Whitespace(4),
+            token_type: TokenType::Whitespace(4),
             line: 1,
             line_range: 0..4,
             indentation_level: 1,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("x"),
+            token_type: TokenType::Identifier("x"),
             line: 1,
             line_range: 4..5,
             indentation_level: 1,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Newline,
+            token_type: TokenType::Newline,
             line: 1,
             line_range: 5..6,
             indentation_level: 1,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("y"),
+            token_type: TokenType::Identifier("y"),
             line: 2,
             line_range: 0..1,
             indentation_level: 0,
@@ -268,25 +268,25 @@ impl<'a> From<L3Token<'a>> for SimpleL3Token<'a> {
     "x\n        y",
     Ok(vec![
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("x"),
+            token_type: TokenType::Identifier("x"),
             line: 0,
             line_range: 0..1,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Newline,
+            token_type: TokenType::Newline,
             line: 0,
             line_range: 1..2,
             indentation_level: 0,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Whitespace(8),
+            token_type: TokenType::Whitespace(8),
             line: 1,
             line_range: 0..8,
             indentation_level: 2,
         },
         SimpleL3Token {
-            token_type: L2TokenType::Identifier("y"),
+            token_type: TokenType::Identifier("y"),
             line: 1,
             line_range: 8..9,
             indentation_level: 2,
