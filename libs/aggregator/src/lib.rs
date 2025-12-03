@@ -131,6 +131,7 @@ where
                     "panic" => TokenType::Panic,
                     "todo" => TokenType::Todo,
                     "unimplemented" => TokenType::Unimplemented,
+                    "mut" => TokenType::Mutable,
 
                     // string-formatting
                     "f" => peek! {
@@ -257,6 +258,7 @@ pub enum TokenType<'a> {
     Panic,         // panic
     Todo,          // todo
     Unimplemented, // unimplemented
+    Mutable,       // mut
 
     // Operators
     ConstantAssignment, // :=
