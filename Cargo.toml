@@ -1,5 +1,5 @@
 [workspace]
-members = ["libs/tokenizer", "libs/aggregator", "libs/structurizer", "libs/parser"]
+members = ["libs/tokenizer"]
 resolver = "3"
 package.version = "0.1.0"
 package.edition = "2024"
@@ -9,6 +9,3 @@ unicode-segmentation = "1.12.0"
 rstest = "0.25.0"
 thiserror = "2.0"
 tokenizer = { path = "libs/tokenizer" }
-aggregator = { path = "libs/aggregator" }
-structurizer = { path = "libs/structurizer" }
-parser = { path = "libs/parser" }
