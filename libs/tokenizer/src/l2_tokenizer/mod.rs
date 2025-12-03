@@ -13,6 +13,7 @@ pub fn l2_tokenize(source: &str) -> impl Iterator<Item = Res<L2Token<'_>>> {
     L2Tokenizer { source, iter }
 }
 
+#[derive(Debug, Clone)]
 struct L2Tokenizer<'a, I>
 where
     I: Iterator<Item = L1Token<'a>>,
