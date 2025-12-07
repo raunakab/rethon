@@ -24,10 +24,8 @@ pub struct Token<'a> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TokenType<'a> {
     // Control
-    Newline,           // \n
-    Whitespace(usize), // ` `; also keeps a track of the number of consecutive whitespace chars
-    Semicolon,         // ;
-    Comma,             // ,
+    Semicolon, // ;
+    Comma,     // ,
 
     // Identifiers
     MacroIdentifier(&'a str),
@@ -83,9 +81,6 @@ pub enum TokenType<'a> {
     Lesser,             // <
     DoubleLesser,       // <<
     LesserOrEqual,      // <=
-
-    // Braces
-    Brace(Brace, BraceDirection),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

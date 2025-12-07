@@ -47,7 +47,7 @@ where
         let content = &self.source[range.clone()];
 
         Ok(L2Token {
-            token_type: TokenType::String(content, string_type),
+            token_type: L2TokenType::Normal(TokenType::String(content, string_type)),
             range,
         })
     }
@@ -92,19 +92,19 @@ where
 
             let token_type = match token_type {
                 L1TokenType::Whitespace => match token {
-                    "\n" => TokenType::Newline,
+                    "\n" => L2TokenType::Newline,
                     " " => {
                         let mut count = 1usize;
                         loop {
                             peek! {
                                 (" ", ..) => count = count.checked_add(1).unwrap(),
-                                _ => break TokenType::Whitespace(count),
+                                _ => break L2TokenType::Whitespace(count),
                             }
                         }
                     }
                     token => break Some(Err(Error::InvalidWhitespace(token.to_string()))),
                 },
-                L1TokenType::Keyword => match token {
+                L1TokenType::Keyword => L2TokenType::Normal(match token {
                     "fn" => TokenType::Function,
                     "scope" => TokenType::Scope,
                     "return" => TokenType::Return,
@@ -131,8 +131,8 @@ where
                         _ => TokenType::Identifier(token),
                     },
                     _ => TokenType::Identifier(token),
-                },
-                L1TokenType::Numeric => peek! {
+                }),
+                L1TokenType::Numeric => L2TokenType::Normal(peek! {
                     (".", ..) => {
                         peek! {
                             (fraction, _, L1TokenType::Numeric) => TokenType::Float(token, Some(fraction)),
@@ -140,63 +140,63 @@ where
                         }
                     },
                     _ => TokenType::Number(token),
-                },
+                }),
                 L1TokenType::Punctuation => match token {
-                    ";" => TokenType::Semicolon,
-                    "," => TokenType::Comma,
+                    ";" => L2TokenType::Normal(TokenType::Semicolon),
+                    "," => L2TokenType::Normal(TokenType::Comma),
                     "\"" => break Some(self.parse_string(StringType::Normal, range)),
-                    "=" => peek! {
+                    "=" => L2TokenType::Normal(peek! {
                         ("=", ..) => TokenType::Equals,
                         _ => TokenType::Assignment,
-                    },
-                    "!" => peek! {
+                    }),
+                    "!" => L2TokenType::Normal(peek! {
                         (ident, _, L1TokenType::Keyword) => TokenType::MacroIdentifier(ident),
                         _ => TokenType::Promotion,
-                    },
-                    "?" => TokenType::Coalescence,
-                    "@" => TokenType::Ampersand,
-                    ":" => peek! {
+                    }),
+                    "?" => L2TokenType::Normal(TokenType::Coalescence),
+                    "@" => L2TokenType::Normal(TokenType::Ampersand),
+                    ":" => L2TokenType::Normal(peek! {
                         ("=", ..) => TokenType::ConstantAssignment,
                         _ => TokenType::Colon,
-                    },
-                    "." => peek! {
+                    }),
+                    "." => L2TokenType::Normal(peek! {
                         (".", ..) => TokenType::DoubleDot,
                         _ => TokenType::Dot,
-                    },
-                    "+" => TokenType::Plus,
-                    "-" => peek! {
+                    }),
+                    "+" => L2TokenType::Normal(TokenType::Plus),
+                    "-" => L2TokenType::Normal(peek! {
                         ("-", ..) => TokenType::DoubleMinus,
                         (">", ..) => TokenType::Arrow,
                         _ => TokenType::Minus,
-                    },
-                    "*" => peek! {
+                    }),
+                    "*" => L2TokenType::Normal(peek! {
                         ("*", ..) => TokenType::DoubleAsterisk,
                         _ => TokenType::Asterisk,
-                    },
-                    "/" => TokenType::Slash,
-                    "|" => peek! {
+                    }),
+                    "/" => L2TokenType::Normal(TokenType::Slash),
+                    "|" => L2TokenType::Normal(peek! {
                         (">", ..) => peek! {
                             (">", ..) => TokenType::PipeDoubleForward,
                             _ => TokenType::PipeForward,
                         },
                         _ => TokenType::Pipe,
-                    },
-                    ">" => peek! {
+                    }),
+                    ">" => L2TokenType::Normal(peek! {
                         ("=", ..) => TokenType::GreaterOrEqual,
                         (">", ..) => TokenType::DoubleGreater,
                         _ => TokenType::Greater,
-                    },
-                    "<" => peek! {
+                    }),
+                    "<" => L2TokenType::Normal(peek! {
                         ("=", ..) => TokenType::LesserOrEqual,
                         ("<", ..) => TokenType::DoubleLesser,
                         _ => TokenType::Lesser,
-                    },
-                    "(" => TokenType::Brace(Brace::Round, BraceDirection::Open),
-                    ")" => TokenType::Brace(Brace::Round, BraceDirection::Close),
-                    "[" => TokenType::Brace(Brace::Square, BraceDirection::Open),
-                    "]" => TokenType::Brace(Brace::Square, BraceDirection::Close),
-                    "{" => TokenType::Brace(Brace::Curly, BraceDirection::Open),
-                    "}" => TokenType::Brace(Brace::Curly, BraceDirection::Close),
+                    }),
+                    "(" => L2TokenType::Brace(Brace::Round, BraceDirection::Open),
+                    ")" => L2TokenType::Brace(Brace::Round, BraceDirection::Close),
+                    "[" => L2TokenType::Brace(Brace::Square, BraceDirection::Open),
+                    "]" => L2TokenType::Brace(Brace::Square, BraceDirection::Close),
+                    "{" => L2TokenType::Brace(Brace::Curly, BraceDirection::Open),
+                    "}" => L2TokenType::Brace(Brace::Curly, BraceDirection::Close),
                     token => break Some(Err(Error::UnknownToken(token.to_string()))),
                 },
                 L1TokenType::Unknown => {
@@ -211,6 +211,14 @@ where
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct L2Token<'a> {
-    pub(crate) token_type: TokenType<'a>,
+    pub(crate) token_type: L2TokenType<'a>,
     pub(crate) range: Range<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum L2TokenType<'a> {
+    Normal(TokenType<'a>),
+    Whitespace(usize),
+    Newline,
+    Brace(Brace, BraceDirection),
 }

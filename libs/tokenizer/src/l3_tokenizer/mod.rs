@@ -5,9 +5,8 @@ use std::iter::Peekable;
 
 use crate::{
     Error, Res,
-    l2_tokenizer::{L2Token, l2_tokenize},
+    l2_tokenizer::{L2Token, L2TokenType, l2_tokenize},
     types::Token,
-    types::TokenType,
 };
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
@@ -48,26 +47,21 @@ where
         };
 
         // Handle newline: increment line counter and reset state
-        if matches!(l2_token.token_type, TokenType::Newline) {
-            let result = Token {
-                token_type: l2_token.token_type,
-                source_range: l2_token.range,
-                line: self.line,
-                line_range: self.line_position..(self.line_position + 1),
-                indentation_level: self.indentation_level,
-            };
+        if matches!(l2_token.token_type, L2TokenType::Newline) {
             self.line += 1;
             self.line_position = 0;
             self.indentation_level = 0;
             self.after_newline = true;
-            return Some(Ok(result));
+
+            // Skip newline tokens - don't emit them
+            return self.next();
         }
 
         // Handle whitespace after newline for indentation
         if self.after_newline {
             self.after_newline = false;
 
-            if let TokenType::Whitespace(count) = l2_token.token_type {
+            if let L2TokenType::Whitespace(count) = l2_token.token_type {
                 if count % INDENTATION_SIZE != 0 {
                     return Some(Err(Error::InvalidIndentation {
                         found: count,
@@ -76,22 +70,28 @@ where
                 }
 
                 self.indentation_level = count / INDENTATION_SIZE;
-                let result = Token {
-                    token_type: l2_token.token_type,
-                    source_range: l2_token.range,
-                    line: self.line,
-                    line_range: self.line_position..(self.line_position + count),
-                    indentation_level: self.indentation_level,
-                };
                 self.line_position += count;
-                return Some(Ok(result));
+
+                // Skip indentation whitespace - don't emit it
+                return self.next();
             }
         }
 
         // Regular token processing
         let token_length = l2_token.range.end - l2_token.range.start;
+
+        // Extract the actual TokenType from L2TokenType
+        let token_type = match l2_token.token_type {
+            L2TokenType::Normal(tt) => tt,
+            L2TokenType::Whitespace(_) | L2TokenType::Newline | L2TokenType::Brace(_, _) => {
+                // These should have been handled above, but if we get here, skip them
+                self.line_position += token_length;
+                return self.next();
+            }
+        };
+
         let result = Token {
-            token_type: l2_token.token_type,
+            token_type,
             source_range: l2_token.range,
             line: self.line,
             line_range: self.line_position..self.line_position + token_length,

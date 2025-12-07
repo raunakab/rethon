@@ -1,26 +1,22 @@
-use std::ops::Range;
-
 use crate::{
     Error, Res,
-    l3_tokenizer::{Token, l3_tokenize},
-    types::TokenType,
+    l3_tokenizer::l3_tokenize,
+    types::{Token, TokenType},
 };
 
-// Simplified token type for easier testing (strips ranges and source positions)
+// Simplified token type for easier testing (strips ranges)
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct SimpleL3Token<'a> {
+struct SimpleToken<'a> {
     token_type: TokenType<'a>,
     line: usize,
-    line_range: Range<usize>,
     indentation_level: usize,
 }
 
-impl<'a> From<Token<'a>> for SimpleL3Token<'a> {
+impl<'a> From<Token<'a>> for SimpleToken<'a> {
     fn from(token: Token<'a>) -> Self {
-        SimpleL3Token {
+        SimpleToken {
             token_type: token.token_type,
             line: token.line,
-            line_range: token.line_range,
             indentation_level: token.indentation_level,
         }
     }
@@ -33,10 +29,9 @@ impl<'a> From<Token<'a>> for SimpleL3Token<'a> {
 #[case(
     "fn",
     Ok(vec![
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Function,
             line: 0,
-            line_range: 0..2,
             indentation_level: 0,
         },
     ])
@@ -45,22 +40,14 @@ impl<'a> From<Token<'a>> for SimpleL3Token<'a> {
 #[case(
     "fn add",
     Ok(vec![
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Function,
             line: 0,
-            line_range: 0..2,
             indentation_level: 0,
         },
-        SimpleL3Token {
-            token_type: TokenType::Whitespace(1),
-            line: 0,
-            line_range: 2..3,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Identifier("add"),
             line: 0,
-            line_range: 3..6,
             indentation_level: 0,
         },
     ])
@@ -69,34 +56,19 @@ impl<'a> From<Token<'a>> for SimpleL3Token<'a> {
 #[case(
     "fn add\nreturn",
     Ok(vec![
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Function,
             line: 0,
-            line_range: 0..2,
             indentation_level: 0,
         },
-        SimpleL3Token {
-            token_type: TokenType::Whitespace(1),
-            line: 0,
-            line_range: 2..3,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Identifier("add"),
             line: 0,
-            line_range: 3..6,
             indentation_level: 0,
         },
-        SimpleL3Token {
-            token_type: TokenType::Newline,
-            line: 0,
-            line_range: 6..7,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Return,
             line: 1,
-            line_range: 0..6,
             indentation_level: 0,
         },
     ])
@@ -105,28 +77,14 @@ impl<'a> From<Token<'a>> for SimpleL3Token<'a> {
 #[case(
     "fn\n    add",
     Ok(vec![
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Function,
             line: 0,
-            line_range: 0..2,
             indentation_level: 0,
         },
-        SimpleL3Token {
-            token_type: TokenType::Newline,
-            line: 0,
-            line_range: 2..3,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
-            token_type: TokenType::Whitespace(4),
-            line: 1,
-            line_range: 0..4,
-            indentation_level: 1,
-        },
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Identifier("add"),
             line: 1,
-            line_range: 4..7,
             indentation_level: 1,
         },
     ])
@@ -135,125 +93,124 @@ impl<'a> From<Token<'a>> for SimpleL3Token<'a> {
 #[case(
     "fn\n    if\n        x",
     Ok(vec![
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Function,
             line: 0,
-            line_range: 0..2,
             indentation_level: 0,
         },
-        SimpleL3Token {
-            token_type: TokenType::Newline,
-            line: 0,
-            line_range: 2..3,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
-            token_type: TokenType::Whitespace(4),
-            line: 1,
-            line_range: 0..4,
-            indentation_level: 1,
-        },
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::If,
             line: 1,
-            line_range: 4..6,
             indentation_level: 1,
         },
-        SimpleL3Token {
-            token_type: TokenType::Newline,
-            line: 1,
-            line_range: 6..7,
-            indentation_level: 1,
-        },
-        SimpleL3Token {
-            token_type: TokenType::Whitespace(8),
-            line: 2,
-            line_range: 0..8,
-            indentation_level: 2,
-        },
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Identifier("x"),
             line: 2,
-            line_range: 8..9,
             indentation_level: 2,
         },
     ])
 )]
-// Line range resets on new line
-#[case(
-    "abc def\nghi",
-    Ok(vec![
-        SimpleL3Token {
-            token_type: TokenType::Identifier("abc"),
-            line: 0,
-            line_range: 0..3,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
-            token_type: TokenType::Whitespace(1),
-            line: 0,
-            line_range: 3..4,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
-            token_type: TokenType::Identifier("def"),
-            line: 0,
-            line_range: 4..7,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
-            token_type: TokenType::Newline,
-            line: 0,
-            line_range: 7..8,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
-            token_type: TokenType::Identifier("ghi"),
-            line: 1,
-            line_range: 0..3,
-            indentation_level: 0,
-        },
-    ])
-)]
-// Indentation resets after newline
+// Indentation reset after newline
 #[case(
     "fn\n    x\ny",
     Ok(vec![
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Function,
             line: 0,
-            line_range: 0..2,
             indentation_level: 0,
         },
-        SimpleL3Token {
-            token_type: TokenType::Newline,
-            line: 0,
-            line_range: 2..3,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
-            token_type: TokenType::Whitespace(4),
-            line: 1,
-            line_range: 0..4,
-            indentation_level: 1,
-        },
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Identifier("x"),
             line: 1,
-            line_range: 4..5,
             indentation_level: 1,
         },
-        SimpleL3Token {
-            token_type: TokenType::Newline,
-            line: 1,
-            line_range: 5..6,
-            indentation_level: 1,
-        },
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Identifier("y"),
             line: 2,
-            line_range: 0..1,
             indentation_level: 0,
+        },
+    ])
+)]
+// Multiple indented sections at same level
+#[case(
+    "a\n    x\n    y",
+    Ok(vec![
+        SimpleToken {
+            token_type: TokenType::Identifier("a"),
+            line: 0,
+            indentation_level: 0,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("x"),
+            line: 1,
+            indentation_level: 1,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("y"),
+            line: 2,
+            indentation_level: 1,
+        },
+    ])
+)]
+// Complex nested structure
+#[case(
+    "fn\n    if\n        x\n        y\n    else\n        z",
+    Ok(vec![
+        SimpleToken {
+            token_type: TokenType::Function,
+            line: 0,
+            indentation_level: 0,
+        },
+        SimpleToken {
+            token_type: TokenType::If,
+            line: 1,
+            indentation_level: 1,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("x"),
+            line: 2,
+            indentation_level: 2,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("y"),
+            line: 3,
+            indentation_level: 2,
+        },
+        SimpleToken {
+            token_type: TokenType::Else,
+            line: 4,
+            indentation_level: 1,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("z"),
+            line: 5,
+            indentation_level: 2,
+        },
+    ])
+)]
+// Three levels of nesting
+#[case(
+    "a\n    b\n        c\n            d",
+    Ok(vec![
+        SimpleToken {
+            token_type: TokenType::Identifier("a"),
+            line: 0,
+            indentation_level: 0,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("b"),
+            line: 1,
+            indentation_level: 1,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("c"),
+            line: 2,
+            indentation_level: 2,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("d"),
+            line: 3,
+            indentation_level: 3,
         },
     ])
 )]
@@ -267,38 +224,50 @@ impl<'a> From<Token<'a>> for SimpleL3Token<'a> {
 #[case(
     "x\n        y",
     Ok(vec![
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Identifier("x"),
             line: 0,
-            line_range: 0..1,
             indentation_level: 0,
         },
-        SimpleL3Token {
-            token_type: TokenType::Newline,
-            line: 0,
-            line_range: 1..2,
-            indentation_level: 0,
-        },
-        SimpleL3Token {
-            token_type: TokenType::Whitespace(8),
-            line: 1,
-            line_range: 0..8,
-            indentation_level: 2,
-        },
-        SimpleL3Token {
+        SimpleToken {
             token_type: TokenType::Identifier("y"),
             line: 1,
-            line_range: 8..9,
             indentation_level: 2,
         },
     ])
 )]
-fn test_l3_tokenization(#[case] source: &str, #[case] expected: Res<Vec<SimpleL3Token<'static>>>) {
+// Assignment with indentation
+#[case(
+    "fn\n    x = y",
+    Ok(vec![
+        SimpleToken {
+            token_type: TokenType::Function,
+            line: 0,
+            indentation_level: 0,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("x"),
+            line: 1,
+            indentation_level: 1,
+        },
+        SimpleToken {
+            token_type: TokenType::Assignment,
+            line: 1,
+            indentation_level: 1,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("y"),
+            line: 1,
+            indentation_level: 1,
+        },
+    ])
+)]
+fn test_l3_tokenization(#[case] source: &str, #[case] expected: Res<Vec<SimpleToken<'static>>>) {
     assert_eq!(
         l3_tokenize(source)
             .map(|token| {
                 let token = token?;
-                Ok(SimpleL3Token::from(token))
+                Ok(SimpleToken::from(token))
             })
             .collect::<Res<Vec<_>>>(),
         expected

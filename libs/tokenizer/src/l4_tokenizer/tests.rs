@@ -35,7 +35,6 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn add",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Whitespace(1), 0),
         SimpleNode::Token(TokenType::Identifier("add"), 0),
     ]))
 )]
@@ -44,7 +43,6 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\nreturn",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Token(TokenType::Return, 0),
     ]))
 )]
@@ -53,9 +51,7 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    add",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Identifier("add"), 1),
         ]),
     ]))
@@ -65,13 +61,9 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    x = y",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Identifier("x"), 1),
-            SimpleNode::Token(TokenType::Whitespace(1), 1),
             SimpleNode::Token(TokenType::Assignment, 1),
-            SimpleNode::Token(TokenType::Whitespace(1), 1),
             SimpleNode::Token(TokenType::Identifier("y"), 1),
         ]),
     ]))
@@ -81,13 +73,9 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    if\n        x",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::If, 1),
-            SimpleNode::Token(TokenType::Newline, 1),
             SimpleNode::Scope(vec![
-                SimpleNode::Token(TokenType::Whitespace(8), 2),
                 SimpleNode::Token(TokenType::Identifier("x"), 2),
             ]),
         ]),
@@ -98,11 +86,8 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    x\ny",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Identifier("x"), 1),
-            SimpleNode::Token(TokenType::Newline, 1),
         ]),
         SimpleNode::Token(TokenType::Identifier("y"), 0),
     ]))
@@ -112,12 +97,8 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "a\n    x\n    y",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Identifier("a"), 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Identifier("x"), 1),
-            SimpleNode::Token(TokenType::Newline, 1),
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Identifier("y"), 1),
         ]),
     ]))
@@ -127,24 +108,14 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    if\n        x\n        y\n    else\n        z",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::If, 1),
-            SimpleNode::Token(TokenType::Newline, 1),
             SimpleNode::Scope(vec![
-                SimpleNode::Token(TokenType::Whitespace(8), 2),
                 SimpleNode::Token(TokenType::Identifier("x"), 2),
-                SimpleNode::Token(TokenType::Newline, 2),
-                SimpleNode::Token(TokenType::Whitespace(8), 2),
                 SimpleNode::Token(TokenType::Identifier("y"), 2),
-                SimpleNode::Token(TokenType::Newline, 2),
             ]),
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Else, 1),
-            SimpleNode::Token(TokenType::Newline, 1),
             SimpleNode::Scope(vec![
-                SimpleNode::Token(TokenType::Whitespace(8), 2),
                 SimpleNode::Token(TokenType::Identifier("z"), 2),
             ]),
         ]),
@@ -155,17 +126,11 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "a\n    b\n        c\n            d",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Identifier("a"), 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Identifier("b"), 1),
-            SimpleNode::Token(TokenType::Newline, 1),
             SimpleNode::Scope(vec![
-                SimpleNode::Token(TokenType::Whitespace(8), 2),
                 SimpleNode::Token(TokenType::Identifier("c"), 2),
-                SimpleNode::Token(TokenType::Newline, 2),
                 SimpleNode::Scope(vec![
-                    SimpleNode::Token(TokenType::Whitespace(12), 3),
                     SimpleNode::Token(TokenType::Identifier("d"), 3),
                 ]),
             ]),
@@ -177,11 +142,8 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "a\n    b\nc",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Identifier("a"), 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Identifier("b"), 1),
-            SimpleNode::Token(TokenType::Newline, 1),
         ]),
         SimpleNode::Token(TokenType::Identifier("c"), 0),
     ]))
@@ -191,16 +153,11 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "a\n    b\nc\n    d",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Identifier("a"), 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Identifier("b"), 1),
-            SimpleNode::Token(TokenType::Newline, 1),
         ]),
         SimpleNode::Token(TokenType::Identifier("c"), 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Identifier("d"), 1),
         ]),
     ]))
@@ -210,13 +167,9 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn add\n    return x",
     Ok(SimpleNode::Scope(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Whitespace(1), 0),
         SimpleNode::Token(TokenType::Identifier("add"), 0),
-        SimpleNode::Token(TokenType::Newline, 0),
         SimpleNode::Scope(vec![
-            SimpleNode::Token(TokenType::Whitespace(4), 1),
             SimpleNode::Token(TokenType::Return, 1),
-            SimpleNode::Token(TokenType::Whitespace(1), 1),
             SimpleNode::Token(TokenType::Identifier("x"), 1),
         ]),
     ]))
