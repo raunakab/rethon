@@ -4,7 +4,7 @@ use crate::{
     l2_tokenizer::l2_tokenize,
     l3_tokenizer::l3_tokenize,
     l4_tokenizer::l4_tokenize,
-    types::{Brace, Node, TokenType},
+    types::{Brace, Token, TokenType},
 };
 
 // Simplified node type for easier testing (strips ranges and source positions)
@@ -15,13 +15,13 @@ enum SimpleNode<'a> {
     ScopeEnd,
 }
 
-fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
+fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
     match node {
-        Node::Token(token_type, position) => {
+        Token::Token(token_type, position) => {
             SimpleNode::Token(token_type, position.indentation_level)
         }
-        Node::ScopeStart(brace_opt) => SimpleNode::ScopeStart(brace_opt.map(|(brace, _)| brace)),
-        Node::ScopeEnd(_) => SimpleNode::ScopeEnd,
+        Token::ScopeStart(brace_opt) => SimpleNode::ScopeStart(brace_opt.map(|(brace, _)| brace)),
+        Token::ScopeEnd(_) => SimpleNode::ScopeEnd,
     }
 }
 
@@ -176,6 +176,19 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
         SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Return, 1),
         SimpleNode::Token(TokenType::Identifier("x"), 1),
+        SimpleNode::ScopeEnd,
+    ])
+)]
+#[case(
+    "fn add\n\n    return x",
+    Ok(vec![
+        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(TokenType::Identifier("add"), 0),
+        SimpleNode::ScopeStart(None),
+        SimpleNode::ScopeStart(None),
+        SimpleNode::Token(TokenType::Return, 2),
+        SimpleNode::Token(TokenType::Identifier("x"), 2),
+        SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
     ])
 )]

@@ -3,7 +3,7 @@ use std::ops::Range;
 use derive_more::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Node<'a> {
+pub enum Token<'a> {
     Token(TokenType<'a>, Position),
     ScopeStart(Option<(Brace, Position)>),
     ScopeEnd(Option<Position>),

@@ -1,13 +1,13 @@
 #[macro_export]
-macro_rules! nodes {
+macro_rules! tokens {
     (
         $l:lifetime
         $(,)?
     ) => {
-        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::types::Node<$l>>>>
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::types::Token<$l>>>>
     };
     () => {
-        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::types::Node<'_>>>>
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::types::Token<'_>>>>
     };
 }
 
@@ -46,6 +46,6 @@ pub enum Error {
     InvalidIndentation { found: usize, position: usize },
 }
 
-pub fn tokenize(source: &str) -> nodes!() {
+pub fn tokenize(source: &str) -> tokens!() {
     l4_tokenize(l3_tokenize(l2_tokenize(l1_tokenize(source)))).peekable()
 }

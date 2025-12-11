@@ -3,11 +3,11 @@ mod tests;
 
 use std::iter::Peekable;
 
-use crate::{Res, l3_tokenizer::L3Token, types::Node};
+use crate::{Res, l3_tokenizer::L3Token, types::Token};
 
 pub(crate) fn l4_tokenize<'a>(
     iter: impl Iterator<Item = Res<L3Token<'a>>>,
-) -> impl Iterator<Item = Res<Node<'a>>> {
+) -> impl Iterator<Item = Res<Token<'a>>> {
     L4Tokenizer {
         iter: iter.peekable(),
         indent_stack: vec![0],
@@ -28,7 +28,7 @@ impl<'a, I> Iterator for L4Tokenizer<'a, I>
 where
     I: Iterator<Item = Res<L3Token<'a>>>,
 {
-    type Item = Res<Node<'a>>;
+    type Item = Res<Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         macro_rules! build_scope_end {
@@ -47,7 +47,7 @@ where
             () => {
                 if self.pending_scope_ends > 0 {
                     self.pending_scope_ends -= 1;
-                    return Some(Ok(Node::ScopeEnd(None)));
+                    return Some(Ok(Token::ScopeEnd(None)));
                 }
             };
         }
@@ -74,7 +74,7 @@ where
         if next_indent > current_indent {
             // New scope opening - whitespace-based indentation (no explicit brace)
             self.indent_stack.push(next_indent);
-            return Some(Ok(Node::ScopeStart(None)));
+            return Some(Ok(Token::ScopeStart(None)));
         }
 
         // The previous indentation closes
@@ -86,18 +86,6 @@ where
         }
 
         let l3_token = self.iter.next().unwrap().unwrap();
-        Some(Ok(Node::Token(l3_token.token_type, l3_token.position)))
-
-        // Consume and return the token
-        // match self.iter.next() {
-        //     Some(Ok(token)) => Some(Ok(Node::Token(token))),
-        //     Some(Err(err)) => Some(Err(err)),
-        //     None => {
-        //         // Close remaining scopes
-        //         build_scope_end!(self.indent_stack.len() > 1);
-        //         emit_scope_end!();
-        //         None
-        //     }
-        // }
+        Some(Ok(Token::Token(l3_token.token_type, l3_token.position)))
     }
 }
