@@ -185,6 +185,18 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
         SimpleNode::Token(TokenType::Function, 0),
         SimpleNode::Token(TokenType::Identifier("add"), 0),
         SimpleNode::ScopeStart(None),
+        SimpleNode::Token(TokenType::Return, 1),
+        SimpleNode::Token(TokenType::Identifier("x"), 1),
+        SimpleNode::ScopeEnd,
+    ])
+)]
+// Jump two indentation levels at once
+#[case(
+    "fn add\n        return x",
+    Ok(vec![
+        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(TokenType::Identifier("add"), 0),
+        SimpleNode::ScopeStart(None),
         SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Return, 2),
         SimpleNode::Token(TokenType::Identifier("x"), 2),

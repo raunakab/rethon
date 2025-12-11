@@ -12,6 +12,7 @@ pub(crate) fn l4_tokenize<'a>(
         iter: iter.peekable(),
         indent_stack: vec![0],
         pending_scope_ends: 0,
+        pending_scope_starts: 0,
     }
 }
 
@@ -22,6 +23,7 @@ where
     iter: Peekable<I>,
     indent_stack: Vec<usize>,
     pending_scope_ends: usize,
+    pending_scope_starts: usize,
 }
 
 impl<'a, I> Iterator for L4Tokenizer<'a, I>
@@ -52,8 +54,20 @@ where
             };
         }
 
+        macro_rules! emit_scope_start {
+            () => {
+                if self.pending_scope_starts > 0 {
+                    self.pending_scope_starts -= 1;
+                    return Some(Ok(Token::ScopeStart(None)));
+                }
+            };
+        }
+
         // First, emit any pending scope ends
         emit_scope_end!();
+
+        // Then, emit any pending scope starts
+        emit_scope_start!();
 
         // Peek at the next token to check indentation
         let next_token = match self.iter.peek() {
@@ -72,9 +86,17 @@ where
 
         // A new indentation begins
         if next_indent > current_indent {
-            // New scope opening - whitespace-based indentation (no explicit brace)
-            self.indent_stack.push(next_indent);
-            return Some(Ok(Token::ScopeStart(None)));
+            // Calculate how many levels we're jumping
+            let indent_jump = next_indent - current_indent;
+
+            // Push all intermediate indentation levels onto the stack
+            for level in 1..=indent_jump {
+                self.indent_stack.push(current_indent + level);
+            }
+
+            // Queue up scope starts for each level (will be emitted one per iteration)
+            self.pending_scope_starts = indent_jump;
+            emit_scope_start!();
         }
 
         // The previous indentation closes
