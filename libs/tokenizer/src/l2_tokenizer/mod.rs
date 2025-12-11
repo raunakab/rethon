@@ -6,56 +6,25 @@ use std::{iter::Peekable, ops::Range};
 use crate::{
     Error, Res,
     l1_tokenizer::{L1Token, L1TokenType, l1_tokenize},
-    types::{Brace, BraceDirection, StringType, TokenType},
+    types::{Brace, BraceDirection, TokenType},
 };
 
 pub(crate) fn l2_tokenize(source: &str) -> impl Iterator<Item = Res<L2Token<'_>>> {
     let iter = l1_tokenize(source).peekable();
-    L2Tokenizer { source, iter }
+    L2Tokenizer { iter }
 }
 
 #[derive(Debug, Clone)]
 struct L2Tokenizer<'a, I>
 where
-    I: Iterator<Item = L1Token<'a>>,
+    I: Iterator<Item = Res<L1Token<'a>>>,
 {
-    source: &'a str,
     iter: Peekable<I>,
-}
-
-impl<'a, I> L2Tokenizer<'a, I>
-where
-    I: Iterator<Item = L1Token<'a>>,
-{
-    fn parse_string(&mut self, string_type: StringType, opening: Range<usize>) -> Res<L2Token<'a>> {
-        let closing = loop {
-            let Some(L1Token {
-                token,
-                range,
-                token_type,
-            }) = self.iter.next()
-            else {
-                return Err(Error::UnterminatedString(opening.start));
-            };
-
-            if matches!(token_type, L1TokenType::Punctuation) && matches!(token, "\"") {
-                break range;
-            }
-        };
-
-        let range = opening.end..closing.start;
-        let content = &self.source[range.clone()];
-
-        Ok(L2Token {
-            token_type: L2TokenType::Normal(TokenType::String(content, string_type)),
-            range,
-        })
-    }
 }
 
 impl<'a, I> Iterator for L2Tokenizer<'a, I>
 where
-    I: Iterator<Item = L1Token<'a>>,
+    I: Iterator<Item = Res<L1Token<'a>>>,
 {
     type Item = Res<L2Token<'a>>;
 
@@ -65,7 +34,9 @@ where
         // Automatically wraps tuple patterns in Some()
         macro_rules! peek {
             ($(($($inner:tt)*) => $result:expr),+ $(, _ => $default:expr)? $(,)?) => {{
-                let next_token = self.iter.peek().map(|t| (t.token, t.range.clone(), t.token_type));
+                let next_token = self.iter.peek().and_then(|res| {
+                    res.as_ref().ok().map(|t| (t.token, t.range.clone(), t.token_type))
+                });
                 match next_token {
                     $(
                         Some(($($inner)*)) => {
@@ -81,14 +52,16 @@ where
         }
 
         loop {
-            let Some(L1Token {
+            let l1_token = match self.iter.next()? {
+                Ok(token) => token,
+                Err(err) => return Some(Err(err)),
+            };
+
+            let L1Token {
                 token,
                 range,
                 token_type,
-            }) = self.iter.next()
-            else {
-                break None;
-            };
+            } = l1_token;
 
             let token_type = match token_type {
                 L1TokenType::Whitespace => match token {
@@ -104,6 +77,9 @@ where
                     }
                     token => break Some(Err(Error::InvalidWhitespace(token.to_string()))),
                 },
+                L1TokenType::String(string_type) => {
+                    L2TokenType::Normal(TokenType::String(token, string_type))
+                }
                 L1TokenType::Keyword => L2TokenType::Normal(match token {
                     "fn" => TokenType::Function,
                     "scope" => TokenType::Scope,
@@ -124,12 +100,6 @@ where
                     "todo" => TokenType::Todo,
                     "unimplemented" => TokenType::Unimplemented,
                     "mut" => TokenType::Mutable,
-
-                    // string-formatting
-                    "f" => peek! {
-                        ("\"", string_range, _) => break Some(self.parse_string(StringType::Formatted, string_range)),
-                        _ => TokenType::Identifier(token),
-                    },
                     _ => TokenType::Identifier(token),
                 }),
                 L1TokenType::Numeric => L2TokenType::Normal(peek! {
@@ -144,7 +114,6 @@ where
                 L1TokenType::Punctuation => match token {
                     ";" => L2TokenType::Normal(TokenType::Semicolon),
                     "," => L2TokenType::Normal(TokenType::Comma),
-                    "\"" => break Some(self.parse_string(StringType::Normal, range)),
                     "=" => L2TokenType::Normal(peek! {
                         ("=", ..) => TokenType::Equals,
                         _ => TokenType::Assignment,

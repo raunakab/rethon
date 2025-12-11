@@ -1,4 +1,7 @@
-use crate::l1_tokenizer::{L1Token, L1TokenType, l1_tokenize};
+use crate::{
+    l1_tokenizer::{L1Token, L1TokenType, l1_tokenize},
+    types::StringType,
+};
 
 #[rstest::rstest]
 #[case("", vec![])]
@@ -123,9 +126,6 @@ use crate::l1_tokenizer::{L1Token, L1TokenType, l1_tokenize};
     ("\t", L1TokenType::Whitespace),
     ("values", L1TokenType::Keyword),
 ])]
-#[case("\"", vec![
-    ("\"", L1TokenType::Punctuation),
-])]
 #[case("'", vec![
     ("'", L1TokenType::Punctuation),
 ])]
@@ -133,9 +133,20 @@ use crate::l1_tokenizer::{L1Token, L1TokenType, l1_tokenize};
     ("`", L1TokenType::Punctuation),
 ])]
 #[case("\"hello\"", vec![
-    ("\"", L1TokenType::Punctuation),
-    ("hello", L1TokenType::Keyword),
-    ("\"", L1TokenType::Punctuation),
+    ("hello", L1TokenType::String(StringType::Normal)),
+])]
+#[case("f\"world\"", vec![
+    ("world", L1TokenType::String(StringType::Formatted)),
+])]
+#[case("\"hello\" \"world\"", vec![
+    ("hello", L1TokenType::String(StringType::Normal)),
+    (" ", L1TokenType::Whitespace),
+    ("world", L1TokenType::String(StringType::Normal)),
+])]
+#[case("f\"formatted\" \"normal\"", vec![
+    ("formatted", L1TokenType::String(StringType::Formatted)),
+    (" ", L1TokenType::Whitespace),
+    ("normal", L1TokenType::String(StringType::Normal)),
 ])]
 #[case("'world'", vec![
     ("'", L1TokenType::Punctuation),
@@ -147,27 +158,15 @@ use crate::l1_tokenizer::{L1Token, L1TokenType, l1_tokenize};
     ("backtick", L1TokenType::Keyword),
     ("`", L1TokenType::Punctuation),
 ])]
-#[case("\"double\" 'single' `back`", vec![
-    ("\"", L1TokenType::Punctuation),
-    ("double", L1TokenType::Keyword),
-    ("\"", L1TokenType::Punctuation),
-    (" ", L1TokenType::Whitespace),
-    ("'", L1TokenType::Punctuation),
-    ("single", L1TokenType::Keyword),
-    ("'", L1TokenType::Punctuation),
-    (" ", L1TokenType::Whitespace),
-    ("`", L1TokenType::Punctuation),
-    ("back", L1TokenType::Keyword),
-    ("`", L1TokenType::Punctuation),
-])]
 fn test(#[case] source: &str, #[case] expected: Vec<(&str, L1TokenType)>) {
     assert_eq!(
         l1_tokenize(source)
-            .map(
-                |L1Token {
-                     token, token_type, ..
-                 }| (token, token_type)
-            )
+            .map(|res| {
+                let L1Token {
+                    token, token_type, ..
+                } = res.unwrap();
+                (token, token_type)
+            })
             .collect::<Vec<_>>(),
         expected
     );
