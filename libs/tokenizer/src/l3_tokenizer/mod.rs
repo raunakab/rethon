@@ -5,7 +5,7 @@ use std::iter::Peekable;
 
 use crate::{
     Error, Res,
-    l2_tokenizer::{L2Token, L2TokenType, l2_tokenize},
+    l2_tokenizer::{L2Token, L2TokenType},
     types::Token,
 };
 
