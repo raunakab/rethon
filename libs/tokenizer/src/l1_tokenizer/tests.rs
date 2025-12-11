@@ -1,7 +1,4 @@
-use crate::{
-    l1_tokenizer::{L1Token, L1TokenType, l1_tokenize},
-    types::StringType,
-};
+use crate::l1_tokenizer::{L1Token, L1TokenType, l1_tokenize};
 
 #[rstest::rstest]
 #[case("", vec![])]
@@ -133,20 +130,22 @@ use crate::{
     ("`", L1TokenType::Punctuation),
 ])]
 #[case("\"hello\"", vec![
-    ("hello", L1TokenType::String(StringType::Normal)),
+    ("hello", L1TokenType::String),
 ])]
 #[case("f\"world\"", vec![
-    ("world", L1TokenType::String(StringType::Formatted)),
+    ("f", L1TokenType::Keyword),
+    ("world", L1TokenType::String),
 ])]
 #[case("\"hello\" \"world\"", vec![
-    ("hello", L1TokenType::String(StringType::Normal)),
+    ("hello", L1TokenType::String),
     (" ", L1TokenType::Whitespace),
-    ("world", L1TokenType::String(StringType::Normal)),
+    ("world", L1TokenType::String),
 ])]
 #[case("f\"formatted\" \"normal\"", vec![
-    ("formatted", L1TokenType::String(StringType::Formatted)),
+    ("f", L1TokenType::Keyword),
+    ("formatted", L1TokenType::String),
     (" ", L1TokenType::Whitespace),
-    ("normal", L1TokenType::String(StringType::Normal)),
+    ("normal", L1TokenType::String),
 ])]
 #[case("'world'", vec![
     ("'", L1TokenType::Punctuation),

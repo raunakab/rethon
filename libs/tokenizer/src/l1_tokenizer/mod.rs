@@ -5,7 +5,7 @@ use std::ops::Range;
 
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 
-use crate::{Error, Res, types::StringType};
+use crate::{Error, Res};
 
 pub(crate) fn l1_tokenize(source: &str) -> impl Iterator<Item = Res<L1Token<'_>>> {
     L1Tokenizer {
@@ -22,31 +22,28 @@ struct L1Tokenizer<'a> {
 }
 
 impl<'a> L1Tokenizer<'a> {
-    fn parse_string(&mut self, string_type: StringType, opening_start: usize) -> Res<L1Token<'a>> {
+    fn parse_string(&mut self, opening_start: usize) -> Res<L1Token<'a>> {
         let opening_end = opening_start + 1; // The quote is always 1 byte
 
-        loop {
+        Ok(loop {
             match self.iter.next() {
                 Some((index, grapheme)) => {
-                    if grapheme == "\"" {
-                        // Found closing quote - clear iter_state for next token
-                        self.iter_state = None;
-                        let range = opening_end..index;
-                        let token = &self.source[range.clone()];
-                        return Ok(L1Token {
-                            token,
-                            range,
-                            token_type: L1TokenType::String(string_type),
-                        });
+                    if grapheme != "\"" {
+                        continue;
                     }
-                    // Continue consuming characters inside the string
+
+                    // Found closing quote - clear iter_state for next token
+                    self.iter_state = None;
+                    let range = opening_end..index;
+                    break L1Token {
+                        token: &self.source[range.clone()],
+                        range,
+                        token_type: L1TokenType::String,
+                    };
                 }
-                None => {
-                    // Reached end of input without finding closing quote
-                    return Err(Error::UnterminatedString(opening_start));
-                }
+                None => return Err(Error::UnterminatedString(opening_start)),
             }
-        }
+        })
     }
 }
 
@@ -71,46 +68,24 @@ impl<'a> Iterator for L1Tokenizer<'a> {
 
             // Check if we're starting a string
             if curr_grapheme == "\"" {
-                // If we had a pending token, check if it's 'f' for formatted strings
-                let (should_emit_pending, string_type) = match &self.iter_state {
-                    Some((prev_index, L1TokenType::Keyword))
-                        if &self.source[*prev_index..curr_index] == "f" =>
-                    {
-                        // This is an 'f' before a quote - it's a formatted string
-                        // We'll consume the 'f', so don't emit it
-                        (false, StringType::Formatted)
-                    }
-                    Some(_) => {
-                        // We have a pending token that's not 'f' - emit it first
-                        (true, StringType::Normal)
-                    }
-                    None => {
-                        // No pending token, just parse a normal string
-                        (false, StringType::Normal)
-                    }
+                let Some((prev_index, prev_type)) = self.iter_state else {
+                    break Some(self.parse_string(curr_index));
                 };
 
-                if should_emit_pending {
-                    // Emit the pending token first
-                    let (prev_index, prev_type) = self.iter_state.unwrap();
-                    // Save the current position to resume string parsing
-                    self.iter_state = Some((curr_index, L1TokenType::String(string_type)));
-                    break Some(Ok(L1Token {
-                        token: &self.source[prev_index..curr_index],
-                        range: prev_index..curr_index,
-                        token_type: prev_type,
-                    }));
-                }
-
-                // Clear iter_state and parse the string
-                self.iter_state = None;
-                break Some(self.parse_string(string_type, curr_index));
+                // Save the quote position to parse on next iteration
+                self.iter_state = Some((curr_index, L1TokenType::String));
+                let range = prev_index..curr_index;
+                break Some(Ok(L1Token {
+                    token: &self.source[range.clone()],
+                    range,
+                    token_type: prev_type,
+                }));
             }
 
-            // If we had a pending String token (from deferred string parsing), parse it now
-            if let Some((quote_index, L1TokenType::String(string_type))) = self.iter_state {
+            // If we had a pending String marker (from deferred string parsing), parse it now
+            if let Some((quote_index, L1TokenType::String)) = self.iter_state {
                 self.iter_state = None;
-                break Some(self.parse_string(string_type, quote_index));
+                break Some(self.parse_string(quote_index));
             }
 
             let curr_type = curr_grapheme.into();
@@ -147,7 +122,7 @@ pub(crate) enum L1TokenType {
     Keyword,
     Numeric,
     Punctuation,
-    String(StringType),
+    String,
     Unknown,
 }
 

@@ -6,7 +6,7 @@ use std::{iter::Peekable, ops::Range};
 use crate::{
     Error, Res,
     l1_tokenizer::{L1Token, L1TokenType, l1_tokenize},
-    types::{Brace, BraceDirection, TokenType},
+    types::{Brace, BraceDirection, StringType, TokenType},
 };
 
 pub(crate) fn l2_tokenize(source: &str) -> impl Iterator<Item = Res<L2Token<'_>>> {
@@ -77,8 +77,8 @@ where
                     }
                     token => break Some(Err(Error::InvalidWhitespace(token.to_string()))),
                 },
-                L1TokenType::String(string_type) => {
-                    L2TokenType::Normal(TokenType::String(token, string_type))
+                L1TokenType::String => {
+                    L2TokenType::Normal(TokenType::String(token, StringType::Normal))
                 }
                 L1TokenType::Keyword => L2TokenType::Normal(match token {
                     "fn" => TokenType::Function,
@@ -100,6 +100,12 @@ where
                     "todo" => TokenType::Todo,
                     "unimplemented" => TokenType::Unimplemented,
                     "mut" => TokenType::Mutable,
+
+                    // Check for formatted string prefix
+                    "f" => peek! {
+                        (string_content, _, L1TokenType::String) => TokenType::String(string_content, StringType::Formatted),
+                        _ => TokenType::Identifier(token),
+                    },
                     _ => TokenType::Identifier(token),
                 }),
                 L1TokenType::Numeric => L2TokenType::Normal(peek! {
