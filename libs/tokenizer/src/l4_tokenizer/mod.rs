@@ -6,59 +6,102 @@ use std::iter::Peekable;
 use crate::{
     Res,
     l3_tokenizer::l3_tokenize,
-    types::{Brace, Node, Scope, Token},
+    types::{Brace, Node, Token},
 };
 
-pub(crate) fn l4_tokenize(source: &str) -> Res<Node<'_>> {
-    let mut iter = l3_tokenize(source).peekable();
-    let nodes = parse_scope(&mut iter, 0)?;
-
-    Ok(Node::Scope(Scope { brace: None, nodes }))
+pub(crate) fn l4_tokenize(source: &str) -> impl Iterator<Item = Res<Node<'_>>> {
+    let iter = l3_tokenize(source).peekable();
+    L4Tokenizer {
+        iter,
+        indent_stack: vec![0],
+        pending_scope_ends: 0,
+    }
 }
 
-fn parse_scope<'a, I>(iter: &mut Peekable<I>, current_indent: usize) -> Res<Vec<Node<'a>>>
+struct L4Tokenizer<'a, I>
 where
     I: Iterator<Item = Res<Token<'a>>>,
 {
-    let mut nodes = Vec::new();
+    iter: Peekable<I>,
+    indent_stack: Vec<usize>,
+    pending_scope_ends: usize,
+}
 
-    while let Some(token_result) = iter.peek() {
-        let token = match token_result {
-            Ok(token) => token,
-            Err(_) => return Err(iter.next().unwrap().unwrap_err()),
+impl<'a, I> Iterator for L4Tokenizer<'a, I>
+where
+    I: Iterator<Item = Res<Token<'a>>>,
+{
+    type Item = Res<Node<'a>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        macro_rules! build_scope_end {
+            (
+                $cond:expr
+                $(,)?
+            ) => {
+                while $cond {
+                    self.indent_stack.pop();
+                    self.pending_scope_ends += 1;
+                }
+            };
+        }
+
+        macro_rules! emit_scope_end {
+            () => {
+                if self.pending_scope_ends > 0 {
+                    self.pending_scope_ends -= 1;
+                    return Some(Ok(Node::ScopeEnd));
+                }
+            };
+        }
+
+        // First, emit any pending scope ends
+        emit_scope_end!();
+
+        // Peek at the next token to check indentation
+        let next_token = match self.iter.peek() {
+            Some(Ok(token)) => token,
+            Some(Err(_)) => return Some(Err(self.iter.next().unwrap().unwrap_err())),
+            None => {
+                // End of stream - close all open scopes
+                build_scope_end!(self.indent_stack.len() > 1);
+                emit_scope_end!();
+                return None;
+            }
         };
 
-        // If we encounter a token with lower indentation, return (end of current scope)
-        if token.indentation_level < current_indent {
-            break;
+        let &current_indent = self.indent_stack.last().unwrap();
+        let next_indent = next_token.indentation_level;
+
+        // A new indentation begins
+        if next_indent > current_indent {
+            // New scope opening
+            self.indent_stack.push(next_indent);
+            return Some(Ok(Node::ScopeStart {
+                brace: Some(Brace::Whitespace),
+            }));
         }
 
-        // If we encounter a token with higher indentation, this shouldn't happen
-        // (we should only see current_indent or higher within parse_scope)
-        if token.indentation_level > current_indent {
-            break;
+        // The previous indentation closes
+        if next_indent < current_indent {
+            build_scope_end!(
+                self.indent_stack.len() > 1 && *self.indent_stack.last().unwrap() > next_indent
+            );
+            emit_scope_end!();
         }
 
-        // Consume the token
-        let token = iter.next().unwrap()?;
+        Some(Ok(Node::Token(self.iter.next().unwrap().unwrap())))
 
-        nodes.push(Node::Token(token));
-
-        // Check if the next token has higher indentation (child scope)
-        let next_indent = iter
-            .peek()
-            .and_then(|res| res.as_ref().ok().map(|token| token.indentation_level));
-
-        if let Some(next_indent) = next_indent {
-            if next_indent > current_indent {
-                let child_nodes = parse_scope(iter, next_indent)?;
-                nodes.push(Node::Scope(Scope {
-                    brace: Some(Brace::Whitespace),
-                    nodes: child_nodes,
-                }));
-            }
-        }
+        // Consume and return the token
+        // match self.iter.next() {
+        //     Some(Ok(token)) => Some(Ok(Node::Token(token))),
+        //     Some(Err(err)) => Some(Err(err)),
+        //     None => {
+        //         // Close remaining scopes
+        //         build_scope_end!(self.indent_stack.len() > 1);
+        //         emit_scope_end!();
+        //         None
+        //     }
+        // }
     }
-
-    Ok(nodes)
 }

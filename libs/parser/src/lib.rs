@@ -9,7 +9,7 @@ pub enum Error {
 }
 
 pub fn parser(source: &str) -> Res<Scope> {
-    let nodes = tokenizer::tokenize(source)?;
+    // let nodes = tokenizer::tokenize(source)?;
     todo!()
 }
 

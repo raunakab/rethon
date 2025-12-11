@@ -3,13 +3,8 @@ use std::ops::Range;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Node<'a> {
     Token(Token<'a>),
-    Scope(Scope<'a>),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Scope<'a> {
-    pub brace: Option<Brace>,
-    pub nodes: Vec<Node<'a>>,
+    ScopeStart { brace: Option<Brace> },
+    ScopeEnd,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

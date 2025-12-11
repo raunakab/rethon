@@ -28,6 +28,6 @@ pub enum Error {
     InvalidIndentation { found: usize, position: usize },
 }
 
-pub fn tokenize(source: &str) -> Res<Node<'_>> {
+pub fn tokenize(source: &str) -> impl Iterator<Item = Res<Node<'_>>> {
     l4_tokenize(source)
 }
