@@ -1,5 +1,7 @@
 use crate::{
     Error, Res,
+    l1_tokenizer::l1_tokenize,
+    l2_tokenizer::l2_tokenize,
     l3_tokenizer::l3_tokenize,
     types::{Token, TokenType},
 };
@@ -264,7 +266,7 @@ impl<'a> From<Token<'a>> for SimpleToken<'a> {
 )]
 fn test_l3_tokenization(#[case] source: &str, #[case] expected: Res<Vec<SimpleToken<'static>>>) {
     assert_eq!(
-        l3_tokenize(source)
+        l3_tokenize(l2_tokenize(l1_tokenize(source)))
             .map(|token| {
                 let token = token?;
                 Ok(SimpleToken::from(token))

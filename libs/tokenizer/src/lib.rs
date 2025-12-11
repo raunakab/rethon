@@ -6,7 +6,13 @@ pub mod types;
 
 use thiserror::Error;
 
-use crate::{l3_tokenizer::INDENTATION_SIZE, l4_tokenizer::l4_tokenize, types::Node};
+use crate::{
+    l1_tokenizer::l1_tokenize,
+    l2_tokenizer::l2_tokenize,
+    l3_tokenizer::{INDENTATION_SIZE, l3_tokenize},
+    l4_tokenizer::l4_tokenize,
+    types::Node,
+};
 
 pub type Res<T = ()> = Result<T, Error>;
 
@@ -29,5 +35,5 @@ pub enum Error {
 }
 
 pub fn tokenize(source: &str) -> impl Iterator<Item = Res<Node<'_>>> {
-    l4_tokenize(source)
+    l4_tokenize(l3_tokenize(l2_tokenize(l1_tokenize(source))))
 }

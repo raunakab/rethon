@@ -1,5 +1,6 @@
 use crate::{
     Error, Res,
+    l1_tokenizer::l1_tokenize,
     l2_tokenizer::{L2TokenType, l2_tokenize},
     types::{Brace, BraceDirection, StringType, TokenType},
 };
@@ -164,7 +165,7 @@ use crate::{
 #[case("f\"unterminated ${name}", Err(Error::UnterminatedString(1)))]
 fn test_l2_tokenization(#[case] source: &str, #[case] expected: Res<Vec<L2TokenType>>) {
     assert_eq!(
-        l2_tokenize(source)
+        l2_tokenize(l1_tokenize(source))
             .map(|token| {
                 let token = token?;
                 Ok(token.token_type)

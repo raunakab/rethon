@@ -11,10 +11,11 @@ use crate::{
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
 
-pub(crate) fn l3_tokenize(source: &str) -> impl Iterator<Item = Res<Token<'_>>> {
-    let iter = l2_tokenize(source).peekable();
+pub(crate) fn l3_tokenize<'a>(
+    iter: impl Iterator<Item = Res<L2Token<'a>>>,
+) -> impl Iterator<Item = Res<Token<'a>>> {
     L3Tokenizer {
-        iter,
+        iter: iter.peekable(),
         line: 0,
         line_position: 0,
         indentation_level: 0,

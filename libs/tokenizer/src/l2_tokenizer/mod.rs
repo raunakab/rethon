@@ -5,13 +5,16 @@ use std::{iter::Peekable, ops::Range};
 
 use crate::{
     Error, Res,
-    l1_tokenizer::{L1Token, L1TokenType, l1_tokenize},
+    l1_tokenizer::{L1Token, L1TokenType},
     types::{Brace, BraceDirection, StringType, TokenType},
 };
 
-pub(crate) fn l2_tokenize(source: &str) -> impl Iterator<Item = Res<L2Token<'_>>> {
-    let iter = l1_tokenize(source).peekable();
-    L2Tokenizer { iter }
+pub(crate) fn l2_tokenize<'a>(
+    iter: impl Iterator<Item = Res<L1Token<'a>>>,
+) -> impl Iterator<Item = Res<L2Token<'a>>> {
+    L2Tokenizer {
+        iter: iter.peekable(),
+    }
 }
 
 #[derive(Debug, Clone)]

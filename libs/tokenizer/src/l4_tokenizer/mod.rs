@@ -5,14 +5,14 @@ use std::iter::Peekable;
 
 use crate::{
     Res,
-    l3_tokenizer::l3_tokenize,
     types::{Brace, Node, Token},
 };
 
-pub(crate) fn l4_tokenize(source: &str) -> impl Iterator<Item = Res<Node<'_>>> {
-    let iter = l3_tokenize(source).peekable();
+pub(crate) fn l4_tokenize<'a>(
+    iter: impl Iterator<Item = Res<Token<'a>>>,
+) -> impl Iterator<Item = Res<Node<'a>>> {
     L4Tokenizer {
-        iter,
+        iter: iter.peekable(),
         indent_stack: vec![0],
         pending_scope_ends: 0,
     }
