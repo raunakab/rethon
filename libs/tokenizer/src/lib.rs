@@ -1,3 +1,16 @@
+#[macro_export]
+macro_rules! nodes {
+    (
+        $l:lifetime
+        $(,)?
+    ) => {
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::types::Node<$l>>>>
+    };
+    () => {
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::types::Node<'_>>>>
+    };
+}
+
 mod l1_tokenizer;
 mod l2_tokenizer;
 mod l3_tokenizer;
@@ -11,7 +24,6 @@ use crate::{
     l2_tokenizer::l2_tokenize,
     l3_tokenizer::{INDENTATION_SIZE, l3_tokenize},
     l4_tokenizer::l4_tokenize,
-    types::Node,
 };
 
 pub type Res<T = ()> = Result<T, Error>;
@@ -34,6 +46,6 @@ pub enum Error {
     InvalidIndentation { found: usize, position: usize },
 }
 
-pub fn tokenize(source: &str) -> impl Iterator<Item = Res<Node<'_>>> {
-    l4_tokenize(l3_tokenize(l2_tokenize(l1_tokenize(source))))
+pub fn tokenize(source: &str) -> nodes!() {
+    l4_tokenize(l3_tokenize(l2_tokenize(l1_tokenize(source)))).peekable()
 }

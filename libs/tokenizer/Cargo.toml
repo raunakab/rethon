@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 unicode-segmentation.workspace = true
 thiserror.workspace = true
+derive_more.workspace = true
 
 [dev-dependencies]
 rstest.workspace = true

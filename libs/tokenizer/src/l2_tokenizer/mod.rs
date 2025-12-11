@@ -84,25 +84,40 @@ where
                     L2TokenType::Normal(TokenType::String(token, StringType::Normal))
                 }
                 L1TokenType::Keyword => L2TokenType::Normal(match token {
+                    // function keywords
                     "fn" => TokenType::Function,
+
+                    // definitional keywords
+                    "mut" => TokenType::Mutable,
                     "scope" => TokenType::Scope,
+
+                    // control keywords
                     "return" => TokenType::Return,
                     "yield" => TokenType::Yield,
+                    "throw" => TokenType::Throw,
+                    "otherwise" => TokenType::Otherwise,
+
+                    // boolean keywords
+                    "true" => TokenType::True,
+                    "false" => TokenType::False,
                     "not" => TokenType::Not,
                     "and" => TokenType::And,
                     "or" => TokenType::Or,
+
+                    // conditional keywords
                     "for" => TokenType::For,
                     "loop" => TokenType::Loop,
                     "if" => TokenType::If,
                     "else" => TokenType::Else,
-                    "true" => TokenType::True,
-                    "false" => TokenType::False,
+
+                    // type-algebra keywords
                     "struct" => TokenType::Struct,
                     "enum" => TokenType::Enum,
+
+                    // type-hole keywords
                     "panic" => TokenType::Panic,
                     "todo" => TokenType::Todo,
                     "unimplemented" => TokenType::Unimplemented,
-                    "mut" => TokenType::Mutable,
 
                     // Check for formatted string prefix
                     "f" => peek! {
