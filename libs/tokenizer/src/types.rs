@@ -4,14 +4,14 @@ use derive_more::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Node<'a> {
-    Token(Token<'a>),
-    ScopeStart { brace: Option<Brace> },
-    ScopeEnd,
+    Token(TokenType<'a>, Position),
+    ScopeStart(Option<(Brace, Position)>),
+    ScopeEnd(Option<Position>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Token<'a> {
-    pub token_type: TokenType<'a>,
+pub struct Position {
+    // pub token_type: TokenType<'a>,
     pub source_range: Range<usize>,
     pub line: usize,
     pub line_range: Range<usize>,
@@ -150,7 +150,6 @@ pub enum TokenType<'a> {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Brace {
-    Whitespace,
     Round,
     Square,
     Curly,

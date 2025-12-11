@@ -6,14 +6,14 @@ use std::iter::Peekable;
 use crate::{
     Error, Res,
     l2_tokenizer::{L2Token, L2TokenType},
-    types::Token,
+    types::{Position, TokenType},
 };
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
 
 pub(crate) fn l3_tokenize<'a>(
     iter: impl Iterator<Item = Res<L2Token<'a>>>,
-) -> impl Iterator<Item = Res<Token<'a>>> {
+) -> impl Iterator<Item = Res<L3Token<'a>>> {
     L3Tokenizer {
         iter: iter.peekable(),
         line: 0,
@@ -35,11 +35,17 @@ where
     after_newline: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct L3Token<'a> {
+    pub(crate) token_type: TokenType<'a>,
+    pub(crate) position: Position,
+}
+
 impl<'a, I> Iterator for L3Tokenizer<'a, I>
 where
     I: Iterator<Item = Res<L2Token<'a>>>,
 {
-    type Item = Res<Token<'a>>;
+    type Item = Res<L3Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let l2_token = match self.iter.next()? {
@@ -91,12 +97,14 @@ where
             }
         };
 
-        let result = Token {
+        let result = L3Token {
             token_type,
-            source_range: l2_token.range,
-            line: self.line,
-            line_range: self.line_position..self.line_position + token_length,
-            indentation_level: self.indentation_level,
+            position: Position {
+                source_range: l2_token.range,
+                line: self.line,
+                line_range: self.line_position..self.line_position + token_length,
+                indentation_level: self.indentation_level,
+            },
         };
         self.line_position += token_length;
         Some(Ok(result))

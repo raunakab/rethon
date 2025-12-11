@@ -2,8 +2,8 @@ use crate::{
     Error, Res,
     l1_tokenizer::l1_tokenize,
     l2_tokenizer::l2_tokenize,
-    l3_tokenizer::l3_tokenize,
-    types::{Token, TokenType},
+    l3_tokenizer::{L3Token, l3_tokenize},
+    types::TokenType,
 };
 
 // Simplified token type for easier testing (strips ranges)
@@ -14,12 +14,12 @@ struct SimpleToken<'a> {
     indentation_level: usize,
 }
 
-impl<'a> From<Token<'a>> for SimpleToken<'a> {
-    fn from(token: Token<'a>) -> Self {
+impl<'a> From<L3Token<'a>> for SimpleToken<'a> {
+    fn from(token: L3Token<'a>) -> Self {
         SimpleToken {
             token_type: token.token_type,
-            line: token.line,
-            indentation_level: token.indentation_level,
+            line: token.position.line,
+            indentation_level: token.position.indentation_level,
         }
     }
 }

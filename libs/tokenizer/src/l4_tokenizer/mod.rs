@@ -3,13 +3,10 @@ mod tests;
 
 use std::iter::Peekable;
 
-use crate::{
-    Res,
-    types::{Brace, Node, Token},
-};
+use crate::{Res, l3_tokenizer::L3Token, types::Node};
 
 pub(crate) fn l4_tokenize<'a>(
-    iter: impl Iterator<Item = Res<Token<'a>>>,
+    iter: impl Iterator<Item = Res<L3Token<'a>>>,
 ) -> impl Iterator<Item = Res<Node<'a>>> {
     L4Tokenizer {
         iter: iter.peekable(),
@@ -20,7 +17,7 @@ pub(crate) fn l4_tokenize<'a>(
 
 struct L4Tokenizer<'a, I>
 where
-    I: Iterator<Item = Res<Token<'a>>>,
+    I: Iterator<Item = Res<L3Token<'a>>>,
 {
     iter: Peekable<I>,
     indent_stack: Vec<usize>,
@@ -29,7 +26,7 @@ where
 
 impl<'a, I> Iterator for L4Tokenizer<'a, I>
 where
-    I: Iterator<Item = Res<Token<'a>>>,
+    I: Iterator<Item = Res<L3Token<'a>>>,
 {
     type Item = Res<Node<'a>>;
 
@@ -50,7 +47,7 @@ where
             () => {
                 if self.pending_scope_ends > 0 {
                     self.pending_scope_ends -= 1;
-                    return Some(Ok(Node::ScopeEnd));
+                    return Some(Ok(Node::ScopeEnd(None)));
                 }
             };
         }
@@ -71,15 +68,13 @@ where
         };
 
         let &current_indent = self.indent_stack.last().unwrap();
-        let next_indent = next_token.indentation_level;
+        let next_indent = next_token.position.indentation_level;
 
         // A new indentation begins
         if next_indent > current_indent {
-            // New scope opening
+            // New scope opening - whitespace-based indentation (no explicit brace)
             self.indent_stack.push(next_indent);
-            return Some(Ok(Node::ScopeStart {
-                brace: Some(Brace::Whitespace),
-            }));
+            return Some(Ok(Node::ScopeStart(None)));
         }
 
         // The previous indentation closes
@@ -90,7 +85,8 @@ where
             emit_scope_end!();
         }
 
-        Some(Ok(Node::Token(self.iter.next().unwrap().unwrap())))
+        let l3_token = self.iter.next().unwrap().unwrap();
+        Some(Ok(Node::Token(l3_token.token_type, l3_token.position)))
 
         // Consume and return the token
         // match self.iter.next() {

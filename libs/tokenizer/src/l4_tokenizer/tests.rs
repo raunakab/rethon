@@ -10,16 +10,18 @@ use crate::{
 // Simplified node type for easier testing (strips ranges and source positions)
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum SimpleNode<'a> {
-    Token(TokenType<'a>, usize), // (token_type, indentation_level)
-    ScopeStart { brace: Option<Brace> },
+    Token(TokenType<'a>, usize),
+    ScopeStart(Option<Brace>),
     ScopeEnd,
 }
 
 fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     match node {
-        Node::Token(token) => SimpleNode::Token(token.token_type, token.indentation_level),
-        Node::ScopeStart { brace } => SimpleNode::ScopeStart { brace },
-        Node::ScopeEnd => SimpleNode::ScopeEnd,
+        Node::Token(token_type, position) => {
+            SimpleNode::Token(token_type, position.indentation_level)
+        }
+        Node::ScopeStart(brace_opt) => SimpleNode::ScopeStart(brace_opt.map(|(brace, _)| brace)),
+        Node::ScopeEnd(_) => SimpleNode::ScopeEnd,
     }
 }
 
@@ -54,7 +56,7 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    add",
     Ok(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("add"), 1),
         SimpleNode::ScopeEnd,
     ])
@@ -64,7 +66,7 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    x = y",
     Ok(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("x"), 1),
         SimpleNode::Token(TokenType::Assignment, 1),
         SimpleNode::Token(TokenType::Identifier("y"), 1),
@@ -76,9 +78,9 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    if\n        x",
     Ok(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::If, 1),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("x"), 2),
         SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
@@ -89,7 +91,7 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    x\ny",
     Ok(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("x"), 1),
         SimpleNode::ScopeEnd,
         SimpleNode::Token(TokenType::Identifier("y"), 0),
@@ -100,7 +102,7 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "a\n    x\n    y",
     Ok(vec![
         SimpleNode::Token(TokenType::Identifier("a"), 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("x"), 1),
         SimpleNode::Token(TokenType::Identifier("y"), 1),
         SimpleNode::ScopeEnd,
@@ -111,14 +113,14 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "fn\n    if\n        x\n        y\n    else\n        z",
     Ok(vec![
         SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::If, 1),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("x"), 2),
         SimpleNode::Token(TokenType::Identifier("y"), 2),
         SimpleNode::ScopeEnd,
         SimpleNode::Token(TokenType::Else, 1),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("z"), 2),
         SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
@@ -129,11 +131,11 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "a\n    b\n        c\n            d",
     Ok(vec![
         SimpleNode::Token(TokenType::Identifier("a"), 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("b"), 1),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("c"), 2),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("d"), 3),
         SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
@@ -145,7 +147,7 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "a\n    b\nc",
     Ok(vec![
         SimpleNode::Token(TokenType::Identifier("a"), 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("b"), 1),
         SimpleNode::ScopeEnd,
         SimpleNode::Token(TokenType::Identifier("c"), 0),
@@ -156,11 +158,11 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     "a\n    b\nc\n    d",
     Ok(vec![
         SimpleNode::Token(TokenType::Identifier("a"), 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("b"), 1),
         SimpleNode::ScopeEnd,
         SimpleNode::Token(TokenType::Identifier("c"), 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Identifier("d"), 1),
         SimpleNode::ScopeEnd,
     ])
@@ -171,7 +173,7 @@ fn simplify_node(node: Node<'_>) -> SimpleNode<'_> {
     Ok(vec![
         SimpleNode::Token(TokenType::Function, 0),
         SimpleNode::Token(TokenType::Identifier("add"), 0),
-        SimpleNode::ScopeStart { brace: Some(Brace::Whitespace) },
+        SimpleNode::ScopeStart(None),
         SimpleNode::Token(TokenType::Return, 1),
         SimpleNode::Token(TokenType::Identifier("x"), 1),
         SimpleNode::ScopeEnd,
