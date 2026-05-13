@@ -23,5 +23,9 @@ Python re-imagined.
   - Macros
 - Python
   - Syntax
+  - Generators
 - Swift
   - Arc based memory-management
+- Go
+  - Brevity
+  - Async generators
