@@ -1,4 +1,7 @@
-use crate::{Error, Res, l1_tokenizer::{L1Token, L1TokenType, l1_tokenize}};
+use crate::{
+    Error, Res,
+    l1_tokenizer::{L1Token, L1TokenType, l1_tokenize},
+};
 
 #[rstest::rstest]
 #[case("", vec![])]

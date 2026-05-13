@@ -324,14 +324,14 @@ fn error_invalid_indentation() {
     // 3 spaces is not a multiple of 4
     assert_eq!(
         collect("fn\n   x"),
-        Err(Error::InvalidIndentation { found: 3, position: 3 })
+        Err(Error::InvalidIndentation {
+            found: 3,
+            position: 3
+        })
     );
 }
 
 #[test]
 fn error_unexpected_brace() {
-    assert_eq!(
-        collect("fn\n    {x}"),
-        Err(Error::UnexpectedBrace)
-    );
+    assert_eq!(collect("fn\n    {x}"), Err(Error::UnexpectedBrace));
 }

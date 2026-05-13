@@ -1,9 +1,8 @@
 use crate::{
-    Error, Res,
+    Error, Res, TokenType,
     l1_tokenizer::l1_tokenize,
     l2_tokenizer::l2_tokenize,
     l3_tokenizer::{L3Token, l3_tokenize},
-    TokenType,
 };
 
 // Simplified token type for easier testing (strips ranges)
