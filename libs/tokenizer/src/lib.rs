@@ -30,6 +30,10 @@ use crate::{
 
 pub type Res<T = ()> = Result<T, Error>;
 
+pub fn tokenize(source: &str) -> tokens!() {
+    l4_tokenize(l3_tokenize(l2_tokenize(l1_tokenize(source)))).peekable()
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Error)]
 pub enum Error {
     #[error("Invalid whitespace being used: {0}")]
@@ -49,10 +53,6 @@ pub enum Error {
 
     #[error("Unexpected brace")]
     UnexpectedBrace,
-}
-
-pub fn tokenize(source: &str) -> tokens!() {
-    l4_tokenize(l3_tokenize(l2_tokenize(l1_tokenize(source)))).peekable()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
