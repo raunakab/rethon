@@ -1,9 +1,11 @@
+#![doc = include_str!("README.md")]
+
 #[cfg(test)]
 mod tests;
 
 use std::iter::Peekable;
 
-use crate::{Res, l3_tokenizer::L3Token, types::Token};
+use crate::{Res, Token, l3_tokenizer::L3Token};
 
 pub(crate) fn l4_tokenize<'a>(
     iter: impl Iterator<Item = Res<L3Token<'a>>>,

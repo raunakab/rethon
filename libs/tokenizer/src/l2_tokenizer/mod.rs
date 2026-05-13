@@ -1,3 +1,5 @@
+#![doc = include_str!("README.md")]
+
 #[cfg(test)]
 mod tests;
 
@@ -6,7 +8,7 @@ use std::{iter::Peekable, ops::Range};
 use crate::{
     Error, Res,
     l1_tokenizer::{L1Token, L1TokenType},
-    types::{Brace, BraceDirection, StringType, TokenType},
+    {Brace, BraceDirection, StringType, TokenType},
 };
 
 pub(crate) fn l2_tokenize<'a>(
@@ -68,7 +70,7 @@ where
 
             let token_type = match token_type {
                 L1TokenType::Whitespace => match token {
-                    "\n" => L2TokenType::Newline,
+                    "\n" | "\r\n" => L2TokenType::Newline,
                     " " => {
                         let mut count = 1usize;
                         loop {

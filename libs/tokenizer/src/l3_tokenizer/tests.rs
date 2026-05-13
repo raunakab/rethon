@@ -3,7 +3,7 @@ use crate::{
     l1_tokenizer::l1_tokenize,
     l2_tokenizer::l2_tokenize,
     l3_tokenizer::{L3Token, l3_tokenize},
-    types::TokenType,
+    TokenType,
 };
 
 // Simplified token type for easier testing (strips ranges)
@@ -216,6 +216,56 @@ impl<'a> From<L3Token<'a>> for SimpleToken<'a> {
         },
     ])
 )]
+// CRLF line ending treated identically to LF
+#[case(
+    "fn\r\n    add",
+    Ok(vec![
+        SimpleToken {
+            token_type: TokenType::Function,
+            line: 0,
+            indentation_level: 0,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("add"),
+            line: 1,
+            indentation_level: 1,
+        },
+    ])
+)]
+// Multiple consecutive blank lines — all consumed, line counter advances past each
+#[case(
+    "fn\n\n\n    add",
+    Ok(vec![
+        SimpleToken {
+            token_type: TokenType::Function,
+            line: 0,
+            indentation_level: 0,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("add"),
+            line: 3,
+            indentation_level: 1,
+        },
+    ])
+)]
+// Trailing mid-line whitespace — spaces before a newline are silently skipped
+#[case(
+    "fn   \n    add",
+    Ok(vec![
+        SimpleToken {
+            token_type: TokenType::Function,
+            line: 0,
+            indentation_level: 0,
+        },
+        SimpleToken {
+            token_type: TokenType::Identifier("add"),
+            line: 1,
+            indentation_level: 1,
+        },
+    ])
+)]
+// Brace → error
+#[case("{", Err(Error::UnexpectedBrace))]
 // Invalid indentation: 3 spaces (not a multiple of 4)
 #[case("fn\n   add", Err(Error::InvalidIndentation { found: 3, position: 3 }))]
 // Invalid indentation: 5 spaces

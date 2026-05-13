@@ -1,10 +1,10 @@
 use crate::{
-    Res,
+    Error, Res,
     l1_tokenizer::l1_tokenize,
     l2_tokenizer::l2_tokenize,
     l3_tokenizer::l3_tokenize,
     l4_tokenizer::l4_tokenize,
-    types::{Brace, Token, TokenType},
+    {Brace, Token, TokenType},
 };
 
 // Simplified node type for easier testing (strips ranges and source positions)
@@ -189,6 +189,54 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
         SimpleNode::Token(TokenType::Identifier("x"), 1),
         SimpleNode::ScopeEnd,
     ])
+)]
+// File beginning with indented content — ScopeStart emitted before the first token
+#[case(
+    "    fn",
+    Ok(vec![
+        SimpleNode::ScopeStart(None),
+        SimpleNode::Token(TokenType::Function, 1),
+        SimpleNode::ScopeEnd,
+    ])
+)]
+// CRLF line endings work identically to LF through the full pipeline
+#[case(
+    "fn\r\n    add",
+    Ok(vec![
+        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::ScopeStart(None),
+        SimpleNode::Token(TokenType::Identifier("add"), 1),
+        SimpleNode::ScopeEnd,
+    ])
+)]
+// Multiple consecutive blank lines — scoping unaffected
+#[case(
+    "fn\n\n\n    add",
+    Ok(vec![
+        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::ScopeStart(None),
+        SimpleNode::Token(TokenType::Identifier("add"), 1),
+        SimpleNode::ScopeEnd,
+    ])
+)]
+// Multi-level indentation drop (level 2 → 0 in one step)
+#[case(
+    "a\n    b\n        c\na",
+    Ok(vec![
+        SimpleNode::Token(TokenType::Identifier("a"), 0),
+        SimpleNode::ScopeStart(None),
+        SimpleNode::Token(TokenType::Identifier("b"), 1),
+        SimpleNode::ScopeStart(None),
+        SimpleNode::Token(TokenType::Identifier("c"), 2),
+        SimpleNode::ScopeEnd,
+        SimpleNode::ScopeEnd,
+        SimpleNode::Token(TokenType::Identifier("a"), 0),
+    ])
+)]
+// Error propagation from L3 (invalid indentation reaches L4 unchanged)
+#[case(
+    "a\n   b",
+    Err(Error::InvalidIndentation { found: 3, position: 2 })
 )]
 // Jump two indentation levels at once
 #[case(

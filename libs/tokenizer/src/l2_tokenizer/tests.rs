@@ -2,7 +2,7 @@ use crate::{
     Error, Res,
     l1_tokenizer::l1_tokenize,
     l2_tokenizer::{L2TokenType, l2_tokenize},
-    types::{Brace, BraceDirection, StringType, TokenType},
+    {Brace, BraceDirection, StringType, TokenType},
 };
 
 #[rstest::rstest]
@@ -52,6 +52,11 @@ use crate::{
     Err(Error::InvalidWhitespace("\t".to_string()))
 )]
 #[case("a\nb", Ok(vec![
+    L2TokenType::Normal(TokenType::Identifier("a")),
+    L2TokenType::Newline,
+    L2TokenType::Normal(TokenType::Identifier("b")),
+]))]
+#[case("a\r\nb", Ok(vec![
     L2TokenType::Normal(TokenType::Identifier("a")),
     L2TokenType::Newline,
     L2TokenType::Normal(TokenType::Identifier("b")),
@@ -160,6 +165,19 @@ use crate::{
     L2TokenType::Whitespace(3),
     L2TokenType::Normal(TokenType::Identifier("y")),
 ]))]
+// Standalone \r is not \n or \r\n → InvalidWhitespace
+#[case("\r", Err(Error::InvalidWhitespace("\r".to_string())))]
+// Empty string literal
+#[case("\"\"", Ok(vec![L2TokenType::Normal(TokenType::String("", StringType::Normal))]))]
+// Numeric immediately followed by alphabetic — two distinct tokens
+#[case("12abc", Ok(vec![
+    L2TokenType::Normal(TokenType::Number("12")),
+    L2TokenType::Normal(TokenType::Identifier("abc")),
+]))]
+// Multiple consecutive newlines — each emitted individually
+#[case("\n\n", Ok(vec![L2TokenType::Newline, L2TokenType::Newline]))]
+// Unknown L1 token propagates as UnknownToken error
+#[case("\x01", Err(Error::UnknownToken("\x01".to_string())))]
 #[case("\"", Err(Error::UnterminatedString(0)))]
 #[case("x = \"unterminated", Err(Error::UnterminatedString(4)))]
 #[case("f\"unterminated ${name}", Err(Error::UnterminatedString(1)))]

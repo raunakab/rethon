@@ -1,3 +1,5 @@
+#![doc = include_str!("README.md")]
+
 #[cfg(test)]
 mod tests;
 
@@ -66,20 +68,33 @@ impl<'a> Iterator for L1Tokenizer<'a> {
                 }
             };
 
-            // Check if we're starting a string
+            // Check if we're starting or closing a string
             if curr_grapheme == "\"" {
-                let Some((prev_index, prev_type)) = self.iter_state else {
-                    break Some(self.parse_string(curr_index));
-                };
-
-                // Save the quote position to parse on next iteration
-                self.iter_state = Some((curr_index, L1TokenType::String));
-                let range = prev_index..curr_index;
-                break Some(Ok(L1Token {
-                    token: &self.source[range.clone()],
-                    range,
-                    token_type: prev_type,
-                }));
+                match self.iter_state {
+                    None => {
+                        break Some(self.parse_string(curr_index));
+                    }
+                    Some((prev_index, L1TokenType::String)) => {
+                        // curr_index is the closing quote; string content is between quotes
+                        self.iter_state = None;
+                        let range = (prev_index + 1)..curr_index;
+                        break Some(Ok(L1Token {
+                            token: &self.source[range.clone()],
+                            range,
+                            token_type: L1TokenType::String,
+                        }));
+                    }
+                    Some((prev_index, prev_type)) => {
+                        // Defer string start; emit the preceding token first
+                        self.iter_state = Some((curr_index, L1TokenType::String));
+                        let range = prev_index..curr_index;
+                        break Some(Ok(L1Token {
+                            token: &self.source[range.clone()],
+                            range,
+                            token_type: prev_type,
+                        }));
+                    }
+                }
             }
 
             // If we had a pending String marker (from deferred string parsing), parse it now
@@ -128,6 +143,10 @@ pub(crate) enum L1TokenType {
 
 impl<'a> From<&'a str> for L1TokenType {
     fn from(source: &'a str) -> Self {
+        if source == "\r\n" {
+            return Self::Whitespace;
+        }
+
         if source.len() != 1 {
             return Self::Keyword;
         }

@@ -1,3 +1,5 @@
+#![doc = include_str!("README.md")]
+
 #[cfg(test)]
 mod tests;
 
@@ -6,7 +8,7 @@ use std::iter::Peekable;
 use crate::{
     Error, Res,
     l2_tokenizer::{L2Token, L2TokenType},
-    types::{Position, TokenType},
+    {Position, TokenType},
 };
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
@@ -90,8 +92,8 @@ where
         // Extract the actual TokenType from L2TokenType
         let token_type = match l2_token.token_type {
             L2TokenType::Normal(tt) => tt,
-            L2TokenType::Whitespace(_) | L2TokenType::Newline | L2TokenType::Brace(_, _) => {
-                // These should have been handled above, but if we get here, skip them
+            L2TokenType::Brace(_, _) => return Some(Err(Error::UnexpectedBrace)),
+            L2TokenType::Whitespace(_) | L2TokenType::Newline => {
                 self.line_position += token_length;
                 return self.next();
             }
