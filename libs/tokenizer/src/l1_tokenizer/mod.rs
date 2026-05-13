@@ -164,6 +164,6 @@ impl<'a> From<&'a str> for L1TokenType {
             return Self::Punctuation;
         }
 
-        return Self::Unknown;
+        Self::Unknown
     }
 }
