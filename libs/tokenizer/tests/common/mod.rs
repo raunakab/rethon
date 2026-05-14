@@ -12,8 +12,8 @@ pub fn collect(source: &str) -> Res<Vec<S<'_>>> {
         .map(|res| {
             res.map(|token| match token {
                 ScopeItem::Token(ty, _) => S::T(ty),
-                ScopeItem::ScopeStart(_) => S::Open,
-                ScopeItem::ScopeEnd(_) => S::Close,
+                ScopeItem::Start(_) => S::Open,
+                ScopeItem::End(_) => S::Close,
             })
         })
         .collect()

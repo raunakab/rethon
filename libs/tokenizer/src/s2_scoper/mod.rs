@@ -54,7 +54,7 @@ where
             () => {
                 if self.pending_scope_ends > 0 {
                     self.pending_scope_ends -= 1;
-                    return Some(Ok(ScopeItem::ScopeEnd(None)));
+                    return Some(Ok(ScopeItem::End(None)));
                 }
             };
         }
@@ -63,7 +63,7 @@ where
             () => {
                 if self.pending_scope_starts > 0 {
                     self.pending_scope_starts -= 1;
-                    return Some(Ok(ScopeItem::ScopeStart(None)));
+                    return Some(Ok(ScopeItem::Start(None)));
                 }
             };
         }
@@ -116,10 +116,10 @@ where
         Some(Ok(match stripped.kind {
             StrippedTokenKind::Normal(tt) => ScopeItem::Token(tt, stripped.position),
             StrippedTokenKind::Brace(brace, BraceDirection::Open) => {
-                ScopeItem::ScopeStart(Some((brace, stripped.position)))
+                ScopeItem::Start(Some((brace, stripped.position)))
             }
             StrippedTokenKind::Brace(brace, BraceDirection::Close) => {
-                ScopeItem::ScopeEnd(Some((brace, stripped.position)))
+                ScopeItem::End(Some((brace, stripped.position)))
             }
         }))
     }

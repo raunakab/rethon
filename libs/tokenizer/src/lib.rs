@@ -34,8 +34,8 @@ pub fn scope(source: &str) -> tokens!() {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScopeItem<'a> {
     Token(Token<'a>, Position),
-    ScopeStart(Option<(Brace, Position)>),
-    ScopeEnd(Option<(Brace, Position)>),
+    Start(Option<(Brace, Position)>),
+    End(Option<(Brace, Position)>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

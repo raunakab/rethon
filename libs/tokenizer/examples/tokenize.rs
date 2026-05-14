@@ -27,11 +27,11 @@ fn main() {
     for result in scope(SOURCE) {
         let result = result.unwrap();
         match result {
-            ScopeItem::ScopeStart(_) => {
+            ScopeItem::Start(_) => {
                 println!("{}{{", "    ".repeat(depth));
                 depth = depth.saturating_add(1);
             }
-            ScopeItem::ScopeEnd(_) => {
+            ScopeItem::End(_) => {
                 depth = depth.saturating_sub(1);
                 println!("{}}}", "    ".repeat(depth));
             }

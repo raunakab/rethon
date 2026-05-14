@@ -17,10 +17,8 @@ fn simplify_node(node: ScopeItem<'_>) -> SimpleNode<'_> {
         ScopeItem::Token(token_type, position) => {
             SimpleNode::Token(token_type, position.indentation_level)
         }
-        ScopeItem::ScopeStart(brace_opt) => {
-            SimpleNode::ScopeStart(brace_opt.map(|(brace, _)| brace))
-        }
-        ScopeItem::ScopeEnd(_) => SimpleNode::ScopeEnd,
+        ScopeItem::Start(brace_opt) => SimpleNode::ScopeStart(brace_opt.map(|(brace, _)| brace)),
+        ScopeItem::End(_) => SimpleNode::ScopeEnd,
     }
 }
 
