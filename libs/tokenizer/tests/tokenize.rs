@@ -12,7 +12,7 @@ use tokenizer::{Res, StringType, TokenType};
     "x := 42",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("42")),
     ])
 )]
@@ -33,7 +33,7 @@ use tokenizer::{Res, StringType, TokenType};
     "x := \"hello\"",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::String("hello", StringType::Normal)),
     ])
 )]

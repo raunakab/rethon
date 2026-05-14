@@ -29,7 +29,7 @@ use tokenizer::{Res, TokenType};
         T(TokenType::Identifier("Foo")),
         Open,
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("0")),
         Close,
     ])
@@ -42,10 +42,10 @@ use tokenizer::{Res, TokenType};
         T(TokenType::Identifier("Color")),
         Open,
         T(TokenType::Identifier("red")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("0")),
         T(TokenType::Identifier("green")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("1")),
         Close,
     ])
@@ -67,7 +67,7 @@ use tokenizer::{Res, TokenType};
         T(TokenType::Identifier("x")),
         T(TokenType::Semicolon),
         T(TokenType::Identifier("Int")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("42")),
     ])
 )]
@@ -78,7 +78,7 @@ use tokenizer::{Res, TokenType};
         T(TokenType::Identifier("xs")),
         T(TokenType::Semicolon),
         T(TokenType::Identifier("List")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Identifier("items")),
     ])
 )]
@@ -93,7 +93,7 @@ use tokenizer::{Res, TokenType};
         T(TokenType::Identifier("Inner")),
         Open,
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("0")),
         Close,
         Close,

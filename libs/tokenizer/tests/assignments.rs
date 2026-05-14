@@ -10,7 +10,7 @@ use tokenizer::{Res, StringType, TokenType};
     "x := 42",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("42")),
     ])
 )]
@@ -19,7 +19,7 @@ use tokenizer::{Res, StringType, TokenType};
     "x := 3.14",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Float("3", Some("14"))),
     ])
 )]
@@ -28,7 +28,7 @@ use tokenizer::{Res, StringType, TokenType};
     "x := \"hello\"",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::String("hello", StringType::Normal)),
     ])
 )]
@@ -37,7 +37,7 @@ use tokenizer::{Res, StringType, TokenType};
     "x := true",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::True),
     ])
 )]
@@ -67,7 +67,7 @@ use tokenizer::{Res, StringType, TokenType};
         T(TokenType::Identifier("x")),
         T(TokenType::Semicolon),
         T(TokenType::Identifier("Int")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("42")),
     ])
 )]
@@ -87,13 +87,13 @@ use tokenizer::{Res, StringType, TokenType};
     "x := 1\ny := 2\nz := 3",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("1")),
         T(TokenType::Identifier("y")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("2")),
         T(TokenType::Identifier("z")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("3")),
     ])
 )]
@@ -105,7 +105,7 @@ use tokenizer::{Res, StringType, TokenType};
         T(TokenType::Identifier("f")),
         Open,
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("1")),
         T(TokenType::Return),
         T(TokenType::Identifier("x")),
@@ -117,7 +117,7 @@ use tokenizer::{Res, StringType, TokenType};
     "y := x",
     Ok(vec![
         T(TokenType::Identifier("y")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Identifier("x")),
     ])
 )]

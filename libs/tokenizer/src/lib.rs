@@ -149,7 +149,7 @@ pub enum TokenType<'a> {
 
     // Operators
     #[display(":=")]
-    ConstantAssignment,
+    StaticAssignment,
     #[display("=")]
     Assignment,
     #[display("==")]

@@ -40,7 +40,7 @@ use tokenizer::{Res, StringType, TokenType};
     "x := \"value\"",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::String("value", StringType::Normal)),
     ])
 )]
@@ -49,7 +49,7 @@ use tokenizer::{Res, StringType, TokenType};
     "x := f\"value ${y}\"",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::String("value ${y}", StringType::Formatted)),
     ])
 )]

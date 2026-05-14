@@ -36,7 +36,7 @@ use tokenizer::{Res, TokenType};
     "x := 99",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("99")),
     ])
 )]

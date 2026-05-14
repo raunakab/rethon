@@ -150,7 +150,7 @@ where
                 "?" => L2TokenType::Normal(TokenType::Coalescence),
                 "@" => L2TokenType::Normal(TokenType::Ampersand),
                 ":" => L2TokenType::Normal(peek! {
-                    ("=", ..) => TokenType::ConstantAssignment,
+                    ("=", ..) => TokenType::StaticAssignment,
                     _ => TokenType::Colon,
                 }),
                 "." => L2TokenType::Normal(peek! {

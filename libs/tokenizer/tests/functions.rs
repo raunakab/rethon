@@ -33,10 +33,10 @@ use tokenizer::{Res, TokenType};
         T(TokenType::Identifier("add")),
         Open,
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("1")),
         T(TokenType::Identifier("y")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("2")),
         T(TokenType::Return),
         T(TokenType::Identifier("x")),
@@ -126,7 +126,7 @@ use tokenizer::{Res, TokenType};
     "x := 1\nfn f\n    return x\ny := 2",
     Ok(vec![
         T(TokenType::Identifier("x")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("1")),
         T(TokenType::Function),
         T(TokenType::Identifier("f")),
@@ -135,7 +135,7 @@ use tokenizer::{Res, TokenType};
         T(TokenType::Identifier("x")),
         Close,
         T(TokenType::Identifier("y")),
-        T(TokenType::ConstantAssignment),
+        T(TokenType::StaticAssignment),
         T(TokenType::Number("2")),
     ])
 )]

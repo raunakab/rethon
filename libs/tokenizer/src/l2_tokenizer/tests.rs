@@ -21,7 +21,7 @@ use crate::{
 #[case("0.5", Ok(vec![L2TokenType::Normal(TokenType::Float("0", Some("5")))]))]
 #[case("==", Ok(vec![L2TokenType::Normal(TokenType::Equals)]))]
 #[case("=", Ok(vec![L2TokenType::Normal(TokenType::Assignment)]))]
-#[case(":=", Ok(vec![L2TokenType::Normal(TokenType::ConstantAssignment)]))]
+#[case(":=", Ok(vec![L2TokenType::Normal(TokenType::StaticAssignment)]))]
 #[case("..", Ok(vec![L2TokenType::Normal(TokenType::DoubleDot)]))]
 #[case(".", Ok(vec![L2TokenType::Normal(TokenType::Dot)]))]
 #[case("--", Ok(vec![L2TokenType::Normal(TokenType::DoubleMinus)]))]
