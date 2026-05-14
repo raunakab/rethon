@@ -2,7 +2,7 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use scoper::{Res, Token};
+use lexer::{Res, Token};
 
 #[rstest::rstest]
 // Function header with no body

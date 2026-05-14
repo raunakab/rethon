@@ -3,14 +3,12 @@ mod tests;
 
 use std::iter::Peekable;
 
-use lexer::{Brace, BraceDirection, LexItem, LexKind, Token};
-
-use crate::{Error, Position, Res};
+use crate::{Brace, BraceDirection, Error, LexItem, LexKind, Position, Res, Token};
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
 
 pub(crate) fn whitespace_strip<'a>(
-    iter: impl Iterator<Item = lexer::Res<LexItem<'a>>>,
+    iter: impl Iterator<Item = Res<LexItem<'a>>>,
 ) -> impl Iterator<Item = Res<StrippedToken<'a>>> {
     WhitespaceStripper {
         iter: iter.peekable(),
@@ -24,7 +22,7 @@ pub(crate) fn whitespace_strip<'a>(
 #[derive(Debug, Clone)]
 struct WhitespaceStripper<'a, I>
 where
-    I: Iterator<Item = lexer::Res<LexItem<'a>>>,
+    I: Iterator<Item = Res<LexItem<'a>>>,
 {
     iter: Peekable<I>,
     line: usize,
@@ -47,14 +45,14 @@ pub(crate) struct StrippedToken<'a> {
 
 impl<'a, I> Iterator for WhitespaceStripper<'a, I>
 where
-    I: Iterator<Item = lexer::Res<LexItem<'a>>>,
+    I: Iterator<Item = Res<LexItem<'a>>>,
 {
     type Item = Res<StrippedToken<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let lex_item = match self.iter.next()? {
             Ok(item) => item,
-            Err(error) => return Some(Err(error.into())),
+            Err(error) => return Some(Err(error)),
         };
 
         if matches!(lex_item.kind, LexKind::Newline) {

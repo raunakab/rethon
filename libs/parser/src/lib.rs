@@ -51,9 +51,9 @@ macro_rules! token {
         , $b:pat
         $(,)?
     ) => {
-        scoper::TokenTree::Token(
+        lexer::TokenTree::Token(
             $a,
-            scoper::Position {
+            lexer::Position {
                 indentation_level: $b,
                 ..
             },
@@ -61,7 +61,7 @@ macro_rules! token {
     };
 }
 
-use scoper::{Token, scope, tokens};
+use lexer::{Token, lex, tokens};
 use thiserror::Error;
 
 type Res<T = ()> = Result<T, Error>;
@@ -69,7 +69,7 @@ type Res<T = ()> = Result<T, Error>;
 #[derive(Clone, Debug, PartialEq, Eq, Error)]
 pub enum Error {
     #[error(transparent)]
-    Tokenizer(#[from] scoper::Error),
+    Tokenizer(#[from] lexer::Error),
 
     #[error("Unexpected EOF encountered")]
     UnexpectedEof,
@@ -79,7 +79,7 @@ pub enum Error {
 }
 
 pub fn parser<'a>(source: &'a str) -> Res<Scope<'a>> {
-    let mut tokens = scope(source);
+    let mut tokens = lex(source);
     let items = parse_items(&mut tokens, 0)?;
     Ok(items)
 }

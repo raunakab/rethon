@@ -1,5 +1,5 @@
 [workspace]
-members = ["libs/lexer", "libs/scoper", "libs/parser"]
+members = ["libs/lexer", "libs/parser"]
 resolver = "3"
 package.version = "0.1.0"
 package.edition = "2024"
@@ -10,5 +10,4 @@ rstest = "0.25.0"
 thiserror = "2.0"
 derive_more = { version = "1.0", features = ["display"] }
 lexer = { path = "libs/lexer" }
-scoper = { path = "libs/scoper" }
 parser = { path = "libs/parser" }

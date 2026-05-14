@@ -2,7 +2,7 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use scoper::{Res, Token};
+use lexer::{Res, Token};
 
 #[rstest::rstest]
 // No arguments
@@ -64,7 +64,7 @@ use scoper::{Res, Token};
     Ok(vec![
         T(Token::Identifier("func")),
         Open,
-        T(Token::String("hello", scoper::StringType::Normal)),
+        T(Token::String("hello", lexer::StringType::Normal)),
         Close,
     ])
 )]

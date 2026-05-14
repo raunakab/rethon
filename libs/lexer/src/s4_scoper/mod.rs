@@ -3,11 +3,9 @@ mod tests;
 
 use std::iter::Peekable;
 
-use lexer::BraceDirection;
-
 use crate::{
-    Res, TokenTree,
-    s1_whitespace_stripper::{StrippedToken, StrippedTokenKind},
+    BraceDirection, Res, TokenTree,
+    s3_whitespace_stripper::{StrippedToken, StrippedTokenKind},
 };
 
 pub(crate) fn scope<'a>(

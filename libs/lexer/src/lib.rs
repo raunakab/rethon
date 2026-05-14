@@ -1,29 +1,64 @@
 mod s1_segmenter;
 mod s2_clusterer;
+mod s3_whitespace_stripper;
+mod s4_scoper;
 
 use std::ops::Range;
 
 use derive_more::Display;
 use thiserror::Error;
 
+#[macro_export]
+macro_rules! tokens {
+    ($l:lifetime $(,)?) => {
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::TokenTree<$l>>>>
+    };
+    () => {
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::TokenTree<'_>>>>
+    };
+}
+
 pub type Res<T = ()> = Result<T, Error>;
 
-pub fn lex(source: &str) -> impl Iterator<Item = Res<LexItem<'_>>> {
+pub fn lex(source: &str) -> tokens!() {
+    s4_scoper::scope(s3_whitespace_stripper::whitespace_strip(
+        s2_clusterer::cluster(s1_segmenter::segment(source)),
+    ))
+    .peekable()
+}
+
+#[cfg(test)]
+pub(crate) fn lex_items(source: &str) -> impl Iterator<Item = Res<LexItem<'_>>> {
     s2_clusterer::cluster(s1_segmenter::segment(source))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LexItem<'a> {
-    pub kind: LexKind<'a>,
-    pub range: Range<usize>,
+pub(crate) struct LexItem<'a> {
+    pub(crate) kind: LexKind<'a>,
+    pub(crate) range: Range<usize>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum LexKind<'a> {
+pub(crate) enum LexKind<'a> {
     Normal(Token<'a>),
     Whitespace(usize),
     Newline,
     Brace(Brace, BraceDirection),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum TokenTree<'a> {
+    Token(Token<'a>, Position),
+    Start(Option<(Brace, Position)>),
+    End(Option<(Brace, Position)>),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Position {
+    pub source_range: Range<usize>,
+    pub line: usize,
+    pub line_range: Range<usize>,
+    pub indentation_level: usize,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
@@ -170,4 +205,6 @@ pub enum Error {
     UnknownItem(String),
     #[error("Unterminated string at byte {0}")]
     UnterminatedString(usize),
+    #[error("Invalid indentation: found {found} spaces at byte {position}")]
+    InvalidIndentation { found: usize, position: usize },
 }

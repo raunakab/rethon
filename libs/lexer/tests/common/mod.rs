@@ -1,4 +1,4 @@
-use scoper::{Res, Token, TokenTree, scope};
+use lexer::{Res, Token, TokenTree, lex};
 
 #[derive(Debug, PartialEq)]
 pub enum S<'a> {
@@ -8,7 +8,7 @@ pub enum S<'a> {
 }
 
 pub fn collect(source: &str) -> Res<Vec<S<'_>>> {
-    scope(source)
+    lex(source)
         .map(|res| {
             res.map(|token| match token {
                 TokenTree::Token(ty, _) => S::T(ty),

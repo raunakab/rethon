@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-scoper.workspace = true
+lexer.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]

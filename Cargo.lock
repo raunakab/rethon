@@ -129,8 +129,8 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 name = "parser"
 version = "0.1.0"
 dependencies = [
+ "lexer",
  "rstest",
- "scoper",
  "thiserror",
 ]
 
@@ -245,15 +245,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
 dependencies = [
  "semver",
-]
-
-[[package]]
-name = "scoper"
-version = "0.1.0"
-dependencies = [
- "lexer",
- "rstest",
- "thiserror",
 ]
 
 [[package]]

@@ -2,7 +2,7 @@ mod common;
 
 use common::S::T;
 use common::{S, collect};
-use scoper::{Res, StringType, Token};
+use lexer::{Res, StringType, Token};
 
 #[rstest::rstest]
 // Normal string literal

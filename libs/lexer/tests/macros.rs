@@ -2,7 +2,7 @@ mod common;
 
 use common::S::T;
 use common::{S, collect};
-use scoper::{Res, Token};
+use lexer::{Res, Token};
 
 #[rstest::rstest]
 // Macro with a single identifier argument
