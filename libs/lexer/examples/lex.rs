@@ -13,10 +13,10 @@ fn main() {
     for result in lex(SOURCE) {
         let token = result.unwrap();
         match token.kind {
-            LexKind::Newline => println!("↵"),
+            LexKind::Newline => println!(),
             LexKind::Whitespace(n) => print!("{}", " ".repeat(n)),
-            LexKind::Normal(ty) => print!("[{ty}] "),
-            LexKind::Brace(brace, dir) => print!("[{brace:?}/{dir:?}] "),
+            LexKind::Normal(ty) => print!("[{ty}]"),
+            LexKind::Brace(brace, dir) => print!("[{brace:?}/{dir:?}]"),
         }
     }
     println!();
