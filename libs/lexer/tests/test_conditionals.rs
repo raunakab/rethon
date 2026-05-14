@@ -154,6 +154,70 @@ use lexer::{Res, Token};
         Close,
     ])
 )]
+// `do` separates condition from indented body on the same header line
+#[case(
+    "if cond do\n    return true",
+    Ok(vec![
+        T(Token::If),
+        T(Token::Identifier("cond")),
+        T(Token::Do),
+        Open,
+        T(Token::Return),
+        T(Token::True),
+        Close,
+    ])
+)]
+// `do` with compound condition
+#[case(
+    "if x > 0 do\n    return x",
+    Ok(vec![
+        T(Token::If),
+        T(Token::Identifier("x")),
+        T(Token::Greater),
+        T(Token::Number("0")),
+        T(Token::Do),
+        Open,
+        T(Token::Return),
+        T(Token::Identifier("x")),
+        Close,
+    ])
+)]
+// `do` followed by else branch
+#[case(
+    "if cond do\n    return true\nelse\n    return false",
+    Ok(vec![
+        T(Token::If),
+        T(Token::Identifier("cond")),
+        T(Token::Do),
+        Open,
+        T(Token::Return),
+        T(Token::True),
+        Close,
+        T(Token::Else),
+        Open,
+        T(Token::Return),
+        T(Token::False),
+        Close,
+    ])
+)]
+// `do` is not treated as an identifier even when adjacent to other keywords
+#[case(
+    "if a do\n    if b do\n        return true",
+    Ok(vec![
+        T(Token::If),
+        T(Token::Identifier("a")),
+        T(Token::Do),
+        Open,
+        T(Token::If),
+        T(Token::Identifier("b")),
+        T(Token::Do),
+        Open,
+        T(Token::Return),
+        T(Token::True),
+        Close,
+        Close,
+    ])
+)]
 fn test_conditionals(#[case] source: &str, #[case] expected: Res<Vec<S<'static>>>) {
     assert_eq!(collect(source), expected);
 }
