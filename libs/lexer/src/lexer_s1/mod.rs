@@ -7,22 +7,22 @@ use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 
 use crate::{Error, Res};
 
-pub(crate) fn l1_tokenize(source: &str) -> impl Iterator<Item = Res<L1Token<'_>>> {
-    L1Tokenizer {
+pub(crate) fn tokenize(source: &str) -> impl Iterator<Item = Res<Token<'_>>> {
+    Tokenizer {
         source,
         iter: source.grapheme_indices(true),
         iter_state: None,
     }
 }
 
-struct L1Tokenizer<'a> {
+struct Tokenizer<'a> {
     source: &'a str,
     iter: GraphemeIndices<'a>,
-    iter_state: Option<(usize, L1TokenType)>,
+    iter_state: Option<(usize, TokenKind)>,
 }
 
-impl<'a> L1Tokenizer<'a> {
-    fn parse_string(&mut self, opening_start: usize) -> Res<L1Token<'a>> {
+impl<'a> Tokenizer<'a> {
+    fn parse_string(&mut self, opening_start: usize) -> Res<Token<'a>> {
         let opening_end = opening_start + 1;
 
         Ok(loop {
@@ -34,10 +34,10 @@ impl<'a> L1Tokenizer<'a> {
 
                     self.iter_state = None;
                     let range = opening_end..index;
-                    break L1Token {
+                    break Token {
                         token: &self.source[range.clone()],
                         range,
-                        token_type: L1TokenType::String,
+                        kind: TokenKind::String,
                     };
                 }
                 None => return Err(Error::UnterminatedString(opening_start)),
@@ -46,19 +46,19 @@ impl<'a> L1Tokenizer<'a> {
     }
 }
 
-impl<'a> Iterator for L1Tokenizer<'a> {
-    type Item = Res<L1Token<'a>>;
+impl<'a> Iterator for Tokenizer<'a> {
+    type Item = Res<Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             let Some((curr_index, curr_grapheme)) = self.iter.next() else {
                 match self.iter_state {
-                    Some((prev_index, prev_type)) => {
+                    Some((prev_index, prev_kind)) => {
                         self.iter_state = None;
-                        break Some(Ok(L1Token {
+                        break Some(Ok(Token {
                             token: &self.source[prev_index..],
                             range: prev_index..self.source.len(),
-                            token_type: prev_type,
+                            kind: prev_kind,
                         }));
                     }
                     None => break None,
@@ -70,62 +70,62 @@ impl<'a> Iterator for L1Tokenizer<'a> {
                     None => {
                         break Some(self.parse_string(curr_index));
                     }
-                    Some((prev_index, L1TokenType::String)) => {
+                    Some((prev_index, TokenKind::String)) => {
                         self.iter_state = None;
                         let range = (prev_index + 1)..curr_index;
-                        break Some(Ok(L1Token {
+                        break Some(Ok(Token {
                             token: &self.source[range.clone()],
                             range,
-                            token_type: L1TokenType::String,
+                            kind: TokenKind::String,
                         }));
                     }
-                    Some((prev_index, prev_type)) => {
-                        self.iter_state = Some((curr_index, L1TokenType::String));
+                    Some((prev_index, prev_kind)) => {
+                        self.iter_state = Some((curr_index, TokenKind::String));
                         let range = prev_index..curr_index;
-                        break Some(Ok(L1Token {
+                        break Some(Ok(Token {
                             token: &self.source[range.clone()],
                             range,
-                            token_type: prev_type,
+                            kind: prev_kind,
                         }));
                     }
                 }
             }
 
-            if let Some((quote_index, L1TokenType::String)) = self.iter_state {
+            if let Some((quote_index, TokenKind::String)) = self.iter_state {
                 self.iter_state = None;
                 break Some(self.parse_string(quote_index));
             }
 
-            let curr_type = curr_grapheme.into();
+            let curr_kind = curr_grapheme.into();
             match self.iter_state {
-                Some((prev_index, prev_type)) => {
-                    if matches!(prev_type, L1TokenType::Punctuation)
-                        || matches!(prev_type, L1TokenType::Whitespace)
-                        || curr_type != prev_type
+                Some((prev_index, prev_kind)) => {
+                    if matches!(prev_kind, TokenKind::Punctuation)
+                        || matches!(prev_kind, TokenKind::Whitespace)
+                        || curr_kind != prev_kind
                     {
-                        self.iter_state = Some((curr_index, curr_type));
-                        break Some(Ok(L1Token {
+                        self.iter_state = Some((curr_index, curr_kind));
+                        break Some(Ok(Token {
                             token: &self.source[prev_index..curr_index],
                             range: prev_index..curr_index,
-                            token_type: prev_type,
+                            kind: prev_kind,
                         }));
                     }
                 }
-                None => self.iter_state = Some((curr_index, curr_type)),
+                None => self.iter_state = Some((curr_index, curr_kind)),
             }
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct L1Token<'a> {
+pub(crate) struct Token<'a> {
     pub(crate) token: &'a str,
     pub(crate) range: Range<usize>,
-    pub(crate) token_type: L1TokenType,
+    pub(crate) kind: TokenKind,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum L1TokenType {
+pub(crate) enum TokenKind {
     Whitespace,
     Keyword,
     Numeric,
@@ -134,7 +134,7 @@ pub(crate) enum L1TokenType {
     Unknown,
 }
 
-impl<'a> From<&'a str> for L1TokenType {
+impl<'a> From<&'a str> for TokenKind {
     fn from(source: &'a str) -> Self {
         if source == "\r\n" {
             return Self::Whitespace;

@@ -3,14 +3,14 @@ mod tests;
 
 use std::iter::Peekable;
 
-use lexer::{Brace, BraceDirection, L2Token, L2TokenType, TokenType};
+use lexer::{Brace, BraceDirection, LexKind, LexToken, TokenType};
 
 use crate::{Error, Position, Res};
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
 
 pub(crate) fn l3_tokenize<'a>(
-    iter: impl Iterator<Item = lexer::Res<L2Token<'a>>>,
+    iter: impl Iterator<Item = lexer::Res<LexToken<'a>>>,
 ) -> impl Iterator<Item = Res<L3Token<'a>>> {
     L3Tokenizer {
         iter: iter.peekable(),
@@ -24,7 +24,7 @@ pub(crate) fn l3_tokenize<'a>(
 #[derive(Debug, Clone)]
 struct L3Tokenizer<'a, I>
 where
-    I: Iterator<Item = lexer::Res<L2Token<'a>>>,
+    I: Iterator<Item = lexer::Res<LexToken<'a>>>,
 {
     iter: Peekable<I>,
     line: usize,
@@ -47,17 +47,17 @@ pub(crate) struct L3Token<'a> {
 
 impl<'a, I> Iterator for L3Tokenizer<'a, I>
 where
-    I: Iterator<Item = lexer::Res<L2Token<'a>>>,
+    I: Iterator<Item = lexer::Res<LexToken<'a>>>,
 {
     type Item = Res<L3Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let l2_token = match self.iter.next()? {
-            Ok(l2_token) => l2_token,
+        let lex_token = match self.iter.next()? {
+            Ok(token) => token,
             Err(error) => return Some(Err(error.into())),
         };
 
-        if matches!(l2_token.token_type, L2TokenType::Newline) {
+        if matches!(lex_token.kind, LexKind::Newline) {
             self.line += 1;
             self.line_position = 0;
             self.indentation_level = 0;
@@ -68,11 +68,11 @@ where
         if self.after_newline {
             self.after_newline = false;
 
-            if let L2TokenType::Whitespace(count) = l2_token.token_type {
+            if let LexKind::Whitespace(count) = lex_token.kind {
                 if count % INDENTATION_SIZE != 0 {
                     return Some(Err(Error::InvalidIndentation {
                         found: count,
-                        position: l2_token.range.start,
+                        position: lex_token.range.start,
                     }));
                 }
 
@@ -82,12 +82,12 @@ where
             }
         }
 
-        let token_length = l2_token.range.end - l2_token.range.start;
+        let token_length = lex_token.range.end - lex_token.range.start;
 
-        let token_type = match l2_token.token_type {
-            L2TokenType::Normal(tt) => L3TokenType::Normal(tt),
-            L2TokenType::Brace(brace, dir) => L3TokenType::Brace(brace, dir),
-            L2TokenType::Whitespace(_) | L2TokenType::Newline => {
+        let token_type = match lex_token.kind {
+            LexKind::Normal(tt) => L3TokenType::Normal(tt),
+            LexKind::Brace(brace, dir) => L3TokenType::Brace(brace, dir),
+            LexKind::Whitespace(_) | LexKind::Newline => {
                 self.line_position += token_length;
                 return self.next();
             }
@@ -96,7 +96,7 @@ where
         let result = L3Token {
             token_type,
             position: Position {
-                source_range: l2_token.range,
+                source_range: lex_token.range,
                 line: self.line,
                 line_range: self.line_position..self.line_position + token_length,
                 indentation_level: self.indentation_level,

@@ -1,15 +1,29 @@
-mod lexer_stage1;
-mod lexer_stage2;
+mod lexer_s1;
+mod lexer_s2;
+
+use std::ops::Range;
 
 use derive_more::Display;
 use thiserror::Error;
 
-pub use lexer_stage2::{L2Token, L2TokenType};
-
 pub type Res<T = ()> = Result<T, Error>;
 
-pub fn lex(source: &str) -> impl Iterator<Item = Res<L2Token<'_>>> {
-    lexer_stage2::l2_tokenize(lexer_stage1::l1_tokenize(source))
+pub fn lex(source: &str) -> impl Iterator<Item = Res<LexToken<'_>>> {
+    lexer_s2::tokenize(lexer_s1::tokenize(source))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LexToken<'a> {
+    pub kind: LexKind<'a>,
+    pub range: Range<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum LexKind<'a> {
+    Normal(TokenType<'a>),
+    Whitespace(usize),
+    Newline,
+    Brace(Brace, BraceDirection),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Error)]

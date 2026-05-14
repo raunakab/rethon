@@ -1,40 +1,40 @@
 #[cfg(test)]
 mod tests;
 
-use std::{iter::Peekable, ops::Range};
+use std::iter::Peekable;
 
 use crate::{
-    Brace, BraceDirection, Error, Res, StringType, TokenType,
-    lexer_stage1::{L1Token, L1TokenType},
+    Brace, BraceDirection, Error, LexKind, LexToken, Res, StringType, TokenType,
+    lexer_s1::{Token, TokenKind},
 };
 
-pub(crate) fn l2_tokenize<'a>(
-    iter: impl Iterator<Item = Res<L1Token<'a>>>,
-) -> impl Iterator<Item = Res<L2Token<'a>>> {
-    L2Tokenizer {
+pub(crate) fn tokenize<'a>(
+    iter: impl Iterator<Item = Res<Token<'a>>>,
+) -> impl Iterator<Item = Res<LexToken<'a>>> {
+    Tokenizer {
         iter: iter.peekable(),
     }
 }
 
 #[derive(Debug, Clone)]
-struct L2Tokenizer<'a, I>
+struct Tokenizer<'a, I>
 where
-    I: Iterator<Item = Res<L1Token<'a>>>,
+    I: Iterator<Item = Res<Token<'a>>>,
 {
     iter: Peekable<I>,
 }
 
-impl<'a, I> Iterator for L2Tokenizer<'a, I>
+impl<'a, I> Iterator for Tokenizer<'a, I>
 where
-    I: Iterator<Item = Res<L1Token<'a>>>,
+    I: Iterator<Item = Res<Token<'a>>>,
 {
-    type Item = Res<L2Token<'a>>;
+    type Item = Res<LexToken<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         macro_rules! peek {
             ($(($($inner:tt)*) => $result:expr),+ $(, _ => $default:expr)? $(,)?) => {{
                 let next_token = self.iter.peek().and_then(|res| {
-                    res.as_ref().ok().map(|t| (t.token, t.range.clone(), t.token_type))
+                    res.as_ref().ok().map(|t| (t.token, t.range.clone(), t.kind))
                 });
                 match next_token {
                     $(
@@ -50,35 +50,29 @@ where
             }};
         }
 
-        let l1_token = match self.iter.next()? {
+        let s1_token = match self.iter.next()? {
             Ok(token) => token,
             Err(err) => return Some(Err(err)),
         };
 
-        let L1Token {
-            token,
-            range,
-            token_type,
-        } = l1_token;
+        let Token { token, range, kind } = s1_token;
 
-        let token_type = match token_type {
-            L1TokenType::Whitespace => match token {
-                "\n" | "\r\n" => L2TokenType::Newline,
+        let lex_kind = match kind {
+            TokenKind::Whitespace => match token {
+                "\n" | "\r\n" => LexKind::Newline,
                 " " => {
                     let mut count = 1usize;
                     loop {
                         peek! {
                             (" ", ..) => count = count.checked_add(1).unwrap(),
-                            _ => break L2TokenType::Whitespace(count),
+                            _ => break LexKind::Whitespace(count),
                         }
                     }
                 }
                 token => return Some(Err(Error::InvalidWhitespace(token.to_string()))),
             },
-            L1TokenType::String => {
-                L2TokenType::Normal(TokenType::String(token, StringType::Normal))
-            }
-            L1TokenType::Keyword => L2TokenType::Normal(match token {
+            TokenKind::String => LexKind::Normal(TokenType::String(token, StringType::Normal)),
+            TokenKind::Keyword => LexKind::Normal(match token {
                 "fn" => TokenType::Function,
                 "mut" => TokenType::Mutable,
                 "scope" => TokenType::Scope,
@@ -101,96 +95,85 @@ where
                 "todo" => TokenType::Todo,
                 "unimplemented" => TokenType::Unimplemented,
                 "f" => peek! {
-                    (string_content, _, L1TokenType::String) => TokenType::String(string_content, StringType::Formatted),
+                    (string_content, _, TokenKind::String) => TokenType::String(string_content, StringType::Formatted),
                     _ => TokenType::Identifier(token),
                 },
                 _ => TokenType::Identifier(token),
             }),
-            L1TokenType::Numeric => L2TokenType::Normal(peek! {
+            TokenKind::Numeric => LexKind::Normal(peek! {
                 (".", ..) => {
                     peek! {
-                        (fraction, _, L1TokenType::Numeric) => TokenType::Float(token, Some(fraction)),
+                        (fraction, _, TokenKind::Numeric) => TokenType::Float(token, Some(fraction)),
                         _ => TokenType::Float(token, None),
                     }
                 },
                 _ => TokenType::Number(token),
             }),
-            L1TokenType::Punctuation => match token {
-                ";" => L2TokenType::Normal(TokenType::Semicolon),
-                "," => L2TokenType::Normal(TokenType::Comma),
-                "=" => L2TokenType::Normal(peek! {
+            TokenKind::Punctuation => match token {
+                ";" => LexKind::Normal(TokenType::Semicolon),
+                "," => LexKind::Normal(TokenType::Comma),
+                "=" => LexKind::Normal(peek! {
                     ("=", ..) => TokenType::Equals,
                     _ => TokenType::Assignment,
                 }),
-                "!" => L2TokenType::Normal(peek! {
-                    (ident, _, L1TokenType::Keyword) => TokenType::MacroIdentifier(ident),
+                "!" => LexKind::Normal(peek! {
+                    (ident, _, TokenKind::Keyword) => TokenType::MacroIdentifier(ident),
                     _ => TokenType::Promotion,
                 }),
-                "?" => L2TokenType::Normal(TokenType::Coalescence),
-                "@" => L2TokenType::Normal(TokenType::Ampersand),
-                ":" => L2TokenType::Normal(peek! {
+                "?" => LexKind::Normal(TokenType::Coalescence),
+                "@" => LexKind::Normal(TokenType::Ampersand),
+                ":" => LexKind::Normal(peek! {
                     ("=", ..) => TokenType::StaticAssignment,
                     _ => TokenType::Colon,
                 }),
-                "." => L2TokenType::Normal(peek! {
+                "." => LexKind::Normal(peek! {
                     (".", ..) => TokenType::DoubleDot,
                     _ => TokenType::Dot,
                 }),
-                "+" => L2TokenType::Normal(TokenType::Plus),
-                "-" => L2TokenType::Normal(peek! {
+                "+" => LexKind::Normal(TokenType::Plus),
+                "-" => LexKind::Normal(peek! {
                     ("-", ..) => TokenType::DoubleMinus,
                     (">", ..) => TokenType::Arrow,
                     _ => TokenType::Minus,
                 }),
-                "*" => L2TokenType::Normal(peek! {
+                "*" => LexKind::Normal(peek! {
                     ("*", ..) => TokenType::DoubleAsterisk,
                     _ => TokenType::Asterisk,
                 }),
-                "/" => L2TokenType::Normal(TokenType::Slash),
-                "|" => L2TokenType::Normal(peek! {
+                "/" => LexKind::Normal(TokenType::Slash),
+                "|" => LexKind::Normal(peek! {
                     (">", ..) => peek! {
                         (">", ..) => TokenType::PipeDoubleForward,
                         _ => TokenType::PipeForward,
                     },
                     _ => TokenType::Pipe,
                 }),
-                ">" => L2TokenType::Normal(peek! {
+                ">" => LexKind::Normal(peek! {
                     ("=", ..) => TokenType::GreaterOrEqual,
                     (">", ..) => TokenType::DoubleGreater,
                     _ => TokenType::Greater,
                 }),
-                "<" => L2TokenType::Normal(peek! {
+                "<" => LexKind::Normal(peek! {
                     ("=", ..) => TokenType::LesserOrEqual,
                     ("<", ..) => TokenType::DoubleLesser,
                     _ => TokenType::Lesser,
                 }),
-                "(" => L2TokenType::Brace(Brace::Round, BraceDirection::Open),
-                ")" => L2TokenType::Brace(Brace::Round, BraceDirection::Close),
-                "[" => L2TokenType::Brace(Brace::Square, BraceDirection::Open),
-                "]" => L2TokenType::Brace(Brace::Square, BraceDirection::Close),
-                "{" => L2TokenType::Brace(Brace::Curly, BraceDirection::Open),
-                "}" => L2TokenType::Brace(Brace::Curly, BraceDirection::Close),
+                "(" => LexKind::Brace(Brace::Round, BraceDirection::Open),
+                ")" => LexKind::Brace(Brace::Round, BraceDirection::Close),
+                "[" => LexKind::Brace(Brace::Square, BraceDirection::Open),
+                "]" => LexKind::Brace(Brace::Square, BraceDirection::Close),
+                "{" => LexKind::Brace(Brace::Curly, BraceDirection::Open),
+                "}" => LexKind::Brace(Brace::Curly, BraceDirection::Close),
                 token => return Some(Err(Error::UnknownToken(token.to_string()))),
             },
-            L1TokenType::Unknown => {
+            TokenKind::Unknown => {
                 return Some(Err(Error::UnknownToken(token.to_string())));
             }
         };
 
-        Some(Ok(L2Token { token_type, range }))
+        Some(Ok(LexToken {
+            kind: lex_kind,
+            range,
+        }))
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct L2Token<'a> {
-    pub token_type: L2TokenType<'a>,
-    pub range: Range<usize>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum L2TokenType<'a> {
-    Normal(TokenType<'a>),
-    Whitespace(usize),
-    Newline,
-    Brace(Brace, BraceDirection),
 }
