@@ -1,42 +1,40 @@
 use lexer::{TokenTree, lex};
 
-static SOURCE: &str = "
-num = rand()
+static SOURCE: &str = "num = rand()
 
-fn main
+main = fn()
     x = 1
     y = 2
     z =
-        if x + y > num
+        if x + y > num do
             x + y
         else
             throw
 
     result = z ** 2
-    result
-";
+    result";
 
 fn main() {
     println!("=== Source ===");
     println!("{SOURCE}");
     println!();
 
-    println!("\n=== Token stream ===");
+    println!("=== Stream ===");
 
     let mut depth = 0usize;
     for result in lex(SOURCE) {
         let result = result.unwrap();
         match result {
             TokenTree::Start(_) => {
-                println!("{}{{", "    ".repeat(depth));
+                println!("{}(", "    ".repeat(depth));
                 depth = depth.saturating_add(1);
             }
             TokenTree::End(_) => {
                 depth = depth.saturating_sub(1);
-                println!("{}}}", "    ".repeat(depth));
+                println!("{})", "    ".repeat(depth));
             }
             TokenTree::Token(ty, _) => {
-                println!("{}{ty}", "    ".repeat(depth));
+                println!("{}[{ty}]", "    ".repeat(depth));
             }
         }
     }
