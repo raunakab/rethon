@@ -2,14 +2,14 @@ use lexer::{TokenTree, lex};
 
 static SOURCE: &str = "num = rand()
 
-main = fn()
+main = fn:
     x = 1
     y = 2
     z =
-        if x + y > num do
-            x + y
-        else
-            throw
+        if a = 1; b = 2; a + b < num: x + y
+        else: throw
+
+    for a in b:
 
     result = z ** 2
     result";

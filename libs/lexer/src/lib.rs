@@ -95,8 +95,6 @@ pub enum Token<'a> {
     If,
     #[display("else")]
     Else,
-    #[display("do")]
-    Do,
     #[display("struct")]
     Struct,
     #[display("enum")]
