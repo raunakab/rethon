@@ -26,16 +26,6 @@ pub enum LexKind<'a> {
     Brace(Brace, BraceDirection),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Error)]
-pub enum Error {
-    #[error("Invalid whitespace being used: {0}")]
-    InvalidWhitespace(String),
-    #[error("Unknown item: {0}")]
-    UnknownItem(String),
-    #[error("Unterminated string at byte {0}")]
-    UnterminatedString(usize),
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
 pub enum LexType<'a> {
     // Control
@@ -170,4 +160,14 @@ pub enum BraceDirection {
 pub enum StringType {
     Normal,
     Formatted,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Error)]
+pub enum Error {
+    #[error("Invalid whitespace being used: {0}")]
+    InvalidWhitespace(String),
+    #[error("Unknown item: {0}")]
+    UnknownItem(String),
+    #[error("Unterminated string at byte {0}")]
+    UnterminatedString(usize),
 }
