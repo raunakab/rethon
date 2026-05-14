@@ -9,20 +9,6 @@ enum S<'a> {
     BraceClose(Brace),
 }
 
-fn collect(source: &str) -> Res<Vec<S<'_>>> {
-    lex(source)
-        .map(|res| {
-            res.map(|node| match node {
-                TokenTree::Token(t, _) => S::T(t),
-                TokenTree::Start(None) => S::Open,
-                TokenTree::End(None) => S::Close,
-                TokenTree::Start(Some((b, _))) => S::BraceOpen(b),
-                TokenTree::End(Some((b, _))) => S::BraceClose(b),
-            })
-        })
-        .collect()
-}
-
 #[rstest::rstest]
 // Empty source
 #[case("", Ok(vec![]))]
@@ -141,5 +127,18 @@ fn collect(source: &str) -> Res<Vec<S<'_>>> {
 #[case("\x01", Err(lexer::Error::UnknownItem("\x01".to_string())))]
 #[case("a\n   b", Err(lexer::Error::InvalidIndentation { found: 3, position: 2 }))]
 fn test_lex(#[case] source: &str, #[case] expected: Res<Vec<S<'static>>>) {
-    assert_eq!(collect(source), expected);
+    assert_eq!(
+        lex(source)
+            .map(|res| {
+                res.map(|node| match node {
+                    TokenTree::Token(t, _) => S::T(t),
+                    TokenTree::Start(None) => S::Open,
+                    TokenTree::End(None) => S::Close,
+                    TokenTree::Start(Some((b, _))) => S::BraceOpen(b),
+                    TokenTree::End(Some((b, _))) => S::BraceClose(b),
+                })
+            })
+            .collect::<Res<Vec<S<'_>>>>(),
+        expected
+    );
 }
