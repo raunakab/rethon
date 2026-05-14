@@ -1,5 +1,7 @@
 use crate::{
-    Brace, BraceDirection, Error, Res, Token, lex_items,
+    Brace, BraceDirection, Error, Res, Token,
+    s1_segmenter::segment,
+    s2_clusterer::cluster,
     s3_whitespace_stripper::{StrippedToken, StrippedTokenKind, whitespace_strip},
 };
 
@@ -128,7 +130,7 @@ fn b(
 ]))]
 fn test_s1_strip(#[case] source: &str, #[case] expected: Res<Vec<SimpleToken<'static>>>) {
     assert_eq!(
-        whitespace_strip(lex_items(source))
+        whitespace_strip(cluster(segment(source)))
             .map(|token| {
                 let token = token?;
                 Ok(SimpleToken::from(token))

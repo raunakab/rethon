@@ -27,25 +27,6 @@ pub fn lex(source: &str) -> tokens!() {
     .peekable()
 }
 
-#[cfg(test)]
-pub(crate) fn lex_items(source: &str) -> impl Iterator<Item = Res<LexItem<'_>>> {
-    s2_clusterer::cluster(s1_segmenter::segment(source))
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct LexItem<'a> {
-    pub(crate) kind: LexKind<'a>,
-    pub(crate) range: Range<usize>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum LexKind<'a> {
-    Normal(Token<'a>),
-    Whitespace(usize),
-    Newline,
-    Brace(Brace, BraceDirection),
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TokenTree<'a> {
     Token(Token<'a>, Position),

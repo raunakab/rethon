@@ -1,5 +1,6 @@
 use crate::{
-    Brace, Error, Res, Token, TokenTree, lex_items, s3_whitespace_stripper::whitespace_strip,
+    Brace, Error, Res, Token, TokenTree, s1_segmenter::segment, s2_clusterer::cluster,
+    s3_whitespace_stripper::whitespace_strip,
 };
 
 use super::scope;
@@ -251,7 +252,7 @@ fn simplify_node(node: TokenTree<'_>) -> SimpleNode<'_> {
 )]
 fn test_s2_scope(#[case] source: &str, #[case] expected: Res<Vec<SimpleNode<'static>>>) {
     assert_eq!(
-        scope(whitespace_strip(lex_items(source)))
+        scope(whitespace_strip(cluster(segment(source))))
             .map(|res| res.map(simplify_node))
             .collect::<Res<Vec<_>>>(),
         expected

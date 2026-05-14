@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests;
 
-use std::iter::Peekable;
+use std::{iter::Peekable, ops::Range};
 
 use crate::{
-    Brace, BraceDirection, Error, LexItem, LexKind, Res, StringType, Token,
+    Brace, BraceDirection, Error, Res, StringType, Token,
     s1_segmenter::{Segment, SegmentKind},
 };
 
@@ -180,4 +180,18 @@ where
             range,
         }))
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct LexItem<'a> {
+    pub(crate) kind: LexKind<'a>,
+    pub(crate) range: Range<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum LexKind<'a> {
+    Normal(Token<'a>),
+    Whitespace(usize),
+    Newline,
+    Brace(Brace, BraceDirection),
 }

@@ -3,7 +3,10 @@ mod tests;
 
 use std::iter::Peekable;
 
-use crate::{Brace, BraceDirection, Error, LexItem, LexKind, Position, Res, Token};
+use crate::{
+    Brace, BraceDirection, Error, Position, Res, Token,
+    s2_clusterer::{LexItem, LexKind},
+};
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
 

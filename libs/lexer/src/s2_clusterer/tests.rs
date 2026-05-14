@@ -1,6 +1,7 @@
 use crate::{
-    Brace, BraceDirection, Error, LexKind, Res, StringType, Token, s1_segmenter::segment,
-    s2_clusterer::cluster,
+    Brace, BraceDirection, Error, Res, StringType, Token,
+    s1_segmenter::segment,
+    s2_clusterer::{LexKind, cluster},
 };
 
 #[rstest::rstest]
