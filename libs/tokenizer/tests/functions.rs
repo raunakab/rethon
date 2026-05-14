@@ -2,26 +2,26 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{Res, TokenType};
+use tokenizer::{LexType, Res};
 
 #[rstest::rstest]
 // Function header with no body
 #[case(
     "fn name",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("name")),
+        T(LexType::Function),
+        T(LexType::Identifier("name")),
     ])
 )]
 // Function with a single return
 #[case(
     "fn greet\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("greet")),
+        T(LexType::Function),
+        T(LexType::Identifier("greet")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -29,17 +29,17 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn add\n    x := 1\n    y := 2\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("add")),
+        T(LexType::Function),
+        T(LexType::Identifier("add")),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
-        T(TokenType::Identifier("y")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("2")),
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
+        T(LexType::Identifier("y")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("2")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -47,17 +47,17 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn a\n    return 1\nfn b\n    return 2",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("a")),
+        T(LexType::Function),
+        T(LexType::Identifier("a")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Number("1")),
+        T(LexType::Return),
+        T(LexType::Number("1")),
         Close,
-        T(TokenType::Function),
-        T(TokenType::Identifier("b")),
+        T(LexType::Function),
+        T(LexType::Identifier("b")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Number("2")),
+        T(LexType::Return),
+        T(LexType::Number("2")),
         Close,
     ])
 )]
@@ -65,11 +65,11 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -77,11 +77,11 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n\n\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -89,14 +89,14 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn check\n    if x\n        return true",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("check")),
+        T(LexType::Function),
+        T(LexType::Identifier("check")),
         Open,
-        T(TokenType::If),
-        T(TokenType::Identifier("x")),
+        T(LexType::If),
+        T(LexType::Identifier("x")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::True),
+        T(LexType::Return),
+        T(LexType::True),
         Close,
         Close,
     ])
@@ -105,17 +105,17 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n    if a\n        if b\n            return true",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::If),
-        T(TokenType::Identifier("a")),
+        T(LexType::If),
+        T(LexType::Identifier("a")),
         Open,
-        T(TokenType::If),
-        T(TokenType::Identifier("b")),
+        T(LexType::If),
+        T(LexType::Identifier("b")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::True),
+        T(LexType::Return),
+        T(LexType::True),
         Close,
         Close,
         Close,
@@ -125,18 +125,18 @@ use tokenizer::{Res, TokenType};
 #[case(
     "x := 1\nfn f\n    return x\ny := 2",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
-        T(TokenType::Identifier("y")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("2")),
+        T(LexType::Identifier("y")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("2")),
     ])
 )]
 fn test_functions(#[case] source: &str, #[case] expected: Res<Vec<S<'static>>>) {

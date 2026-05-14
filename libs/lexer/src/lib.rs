@@ -1,5 +1,5 @@
-mod lexer_s1;
-mod lexer_s2;
+mod s1_segmenter;
+mod s2_clusterer;
 
 use std::ops::Range;
 
@@ -8,19 +8,19 @@ use thiserror::Error;
 
 pub type Res<T = ()> = Result<T, Error>;
 
-pub fn lex(source: &str) -> impl Iterator<Item = Res<LexToken<'_>>> {
-    lexer_s2::tokenize(lexer_s1::tokenize(source))
+pub fn lex(source: &str) -> impl Iterator<Item = Res<LexItem<'_>>> {
+    s2_clusterer::cluster(s1_segmenter::segment(source))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct LexToken<'a> {
+pub struct LexItem<'a> {
     pub kind: LexKind<'a>,
     pub range: Range<usize>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LexKind<'a> {
-    Normal(TokenType<'a>),
+    Normal(LexType<'a>),
     Whitespace(usize),
     Newline,
     Brace(Brace, BraceDirection),
@@ -30,14 +30,14 @@ pub enum LexKind<'a> {
 pub enum Error {
     #[error("Invalid whitespace being used: {0}")]
     InvalidWhitespace(String),
-    #[error("Unknown token: {0}")]
-    UnknownToken(String),
+    #[error("Unknown item: {0}")]
+    UnknownItem(String),
     #[error("Unterminated string at byte {0}")]
     UnterminatedString(usize),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
-pub enum TokenType<'a> {
+pub enum LexType<'a> {
     // Control
     #[display(";")]
     Semicolon,

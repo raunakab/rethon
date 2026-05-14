@@ -2,26 +2,26 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{Res, TokenType};
+use tokenizer::{LexType, Res};
 
 #[rstest::rstest]
 // Bare otherwise keyword with no body
 #[case(
     "otherwise",
-    Ok(vec![T(TokenType::Otherwise)])
+    Ok(vec![T(LexType::Otherwise)])
 )]
 // Basic otherwise with single-statement body
 #[case(
     "x := foo\notherwise\n    x := default",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("foo")),
-        T(TokenType::Otherwise),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("foo")),
+        T(LexType::Otherwise),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("default")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("default")),
         Close,
     ])
 )]
@@ -29,17 +29,17 @@ use tokenizer::{Res, TokenType};
 #[case(
     "x := foo\notherwise\n    x := fallback\n    y := 0",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("foo")),
-        T(TokenType::Otherwise),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("foo")),
+        T(LexType::Otherwise),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("fallback")),
-        T(TokenType::Identifier("y")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("0")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("fallback")),
+        T(LexType::Identifier("y")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("0")),
         Close,
     ])
 )]
@@ -47,13 +47,13 @@ use tokenizer::{Res, TokenType};
 #[case(
     "x := compute\notherwise\n    return default",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("compute")),
-        T(TokenType::Otherwise),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("compute")),
+        T(LexType::Otherwise),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Identifier("default")),
+        T(LexType::Return),
+        T(LexType::Identifier("default")),
         Close,
     ])
 )]
@@ -61,20 +61,20 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n    x := foo\n    otherwise\n        x := default\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("foo")),
-        T(TokenType::Otherwise),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("foo")),
+        T(LexType::Otherwise),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("default")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("default")),
         Close,
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -82,18 +82,18 @@ use tokenizer::{Res, TokenType};
 #[case(
     "x := risky\notherwise\n    x := safe\ny := done",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("risky")),
-        T(TokenType::Otherwise),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("risky")),
+        T(LexType::Otherwise),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("safe")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("safe")),
         Close,
-        T(TokenType::Identifier("y")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("done")),
+        T(LexType::Identifier("y")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("done")),
     ])
 )]
 fn test_otherwise(#[case] source: &str, #[case] expected: Res<Vec<S<'static>>>) {

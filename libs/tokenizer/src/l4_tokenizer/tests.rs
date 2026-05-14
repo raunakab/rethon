@@ -1,13 +1,13 @@
 use lexer::lex;
 
 use crate::{
-    Brace, Error, Res, Token, TokenType, l3_tokenizer::l3_tokenize, l4_tokenizer::l4_tokenize,
+    Brace, Error, LexType, Res, Token, l3_tokenizer::l3_tokenize, l4_tokenizer::l4_tokenize,
 };
 
 // Simplified node type for easier testing (strips ranges and source positions)
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum SimpleNode<'a> {
-    Token(TokenType<'a>, usize),
+    Token(LexType<'a>, usize),
     ScopeStart(Option<Brace>),
     ScopeEnd,
 }
@@ -29,32 +29,32 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "fn",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(LexType::Function, 0),
     ])
 )]
 // Multiple tokens on single line, no indentation
 #[case(
     "fn add",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Identifier("add"), 0),
+        SimpleNode::Token(LexType::Function, 0),
+        SimpleNode::Token(LexType::Identifier("add"), 0),
     ])
 )]
 // Multiple lines, no indentation
 #[case(
     "fn\nreturn",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Return, 0),
+        SimpleNode::Token(LexType::Function, 0),
+        SimpleNode::Token(LexType::Return, 0),
     ])
 )]
 // Single level indentation
 #[case(
     "fn\n    add",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(LexType::Function, 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("add"), 1),
+        SimpleNode::Token(LexType::Identifier("add"), 1),
         SimpleNode::ScopeEnd,
     ])
 )]
@@ -62,11 +62,11 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "fn\n    x = y",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(LexType::Function, 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("x"), 1),
-        SimpleNode::Token(TokenType::Assignment, 1),
-        SimpleNode::Token(TokenType::Identifier("y"), 1),
+        SimpleNode::Token(LexType::Identifier("x"), 1),
+        SimpleNode::Token(LexType::Assignment, 1),
+        SimpleNode::Token(LexType::Identifier("y"), 1),
         SimpleNode::ScopeEnd,
     ])
 )]
@@ -74,11 +74,11 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "fn\n    if\n        x",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(LexType::Function, 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::If, 1),
+        SimpleNode::Token(LexType::If, 1),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("x"), 2),
+        SimpleNode::Token(LexType::Identifier("x"), 2),
         SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
     ])
@@ -87,21 +87,21 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "fn\n    x\ny",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(LexType::Function, 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("x"), 1),
+        SimpleNode::Token(LexType::Identifier("x"), 1),
         SimpleNode::ScopeEnd,
-        SimpleNode::Token(TokenType::Identifier("y"), 0),
+        SimpleNode::Token(LexType::Identifier("y"), 0),
     ])
 )]
 // Multiple indented sections at same level
 #[case(
     "a\n    x\n    y",
     Ok(vec![
-        SimpleNode::Token(TokenType::Identifier("a"), 0),
+        SimpleNode::Token(LexType::Identifier("a"), 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("x"), 1),
-        SimpleNode::Token(TokenType::Identifier("y"), 1),
+        SimpleNode::Token(LexType::Identifier("x"), 1),
+        SimpleNode::Token(LexType::Identifier("y"), 1),
         SimpleNode::ScopeEnd,
     ])
 )]
@@ -109,16 +109,16 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "fn\n    if\n        x\n        y\n    else\n        z",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(LexType::Function, 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::If, 1),
+        SimpleNode::Token(LexType::If, 1),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("x"), 2),
-        SimpleNode::Token(TokenType::Identifier("y"), 2),
+        SimpleNode::Token(LexType::Identifier("x"), 2),
+        SimpleNode::Token(LexType::Identifier("y"), 2),
         SimpleNode::ScopeEnd,
-        SimpleNode::Token(TokenType::Else, 1),
+        SimpleNode::Token(LexType::Else, 1),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("z"), 2),
+        SimpleNode::Token(LexType::Identifier("z"), 2),
         SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
     ])
@@ -127,13 +127,13 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "a\n    b\n        c\n            d",
     Ok(vec![
-        SimpleNode::Token(TokenType::Identifier("a"), 0),
+        SimpleNode::Token(LexType::Identifier("a"), 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("b"), 1),
+        SimpleNode::Token(LexType::Identifier("b"), 1),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("c"), 2),
+        SimpleNode::Token(LexType::Identifier("c"), 2),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("d"), 3),
+        SimpleNode::Token(LexType::Identifier("d"), 3),
         SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
@@ -143,24 +143,24 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "a\n    b\nc",
     Ok(vec![
-        SimpleNode::Token(TokenType::Identifier("a"), 0),
+        SimpleNode::Token(LexType::Identifier("a"), 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("b"), 1),
+        SimpleNode::Token(LexType::Identifier("b"), 1),
         SimpleNode::ScopeEnd,
-        SimpleNode::Token(TokenType::Identifier("c"), 0),
+        SimpleNode::Token(LexType::Identifier("c"), 0),
     ])
 )]
 // Multiple scopes at base level
 #[case(
     "a\n    b\nc\n    d",
     Ok(vec![
-        SimpleNode::Token(TokenType::Identifier("a"), 0),
+        SimpleNode::Token(LexType::Identifier("a"), 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("b"), 1),
+        SimpleNode::Token(LexType::Identifier("b"), 1),
         SimpleNode::ScopeEnd,
-        SimpleNode::Token(TokenType::Identifier("c"), 0),
+        SimpleNode::Token(LexType::Identifier("c"), 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("d"), 1),
+        SimpleNode::Token(LexType::Identifier("d"), 1),
         SimpleNode::ScopeEnd,
     ])
 )]
@@ -168,22 +168,22 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "fn add\n    return x",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Identifier("add"), 0),
+        SimpleNode::Token(LexType::Function, 0),
+        SimpleNode::Token(LexType::Identifier("add"), 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Return, 1),
-        SimpleNode::Token(TokenType::Identifier("x"), 1),
+        SimpleNode::Token(LexType::Return, 1),
+        SimpleNode::Token(LexType::Identifier("x"), 1),
         SimpleNode::ScopeEnd,
     ])
 )]
 #[case(
     "fn add\n\n    return x",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Identifier("add"), 0),
+        SimpleNode::Token(LexType::Function, 0),
+        SimpleNode::Token(LexType::Identifier("add"), 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Return, 1),
-        SimpleNode::Token(TokenType::Identifier("x"), 1),
+        SimpleNode::Token(LexType::Return, 1),
+        SimpleNode::Token(LexType::Identifier("x"), 1),
         SimpleNode::ScopeEnd,
     ])
 )]
@@ -192,7 +192,7 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
     "    fn",
     Ok(vec![
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Function, 1),
+        SimpleNode::Token(LexType::Function, 1),
         SimpleNode::ScopeEnd,
     ])
 )]
@@ -200,9 +200,9 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "fn\r\n    add",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(LexType::Function, 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("add"), 1),
+        SimpleNode::Token(LexType::Identifier("add"), 1),
         SimpleNode::ScopeEnd,
     ])
 )]
@@ -210,9 +210,9 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "fn\n\n\n    add",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
+        SimpleNode::Token(LexType::Function, 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("add"), 1),
+        SimpleNode::Token(LexType::Identifier("add"), 1),
         SimpleNode::ScopeEnd,
     ])
 )]
@@ -220,14 +220,14 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "a\n    b\n        c\na",
     Ok(vec![
-        SimpleNode::Token(TokenType::Identifier("a"), 0),
+        SimpleNode::Token(LexType::Identifier("a"), 0),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("b"), 1),
+        SimpleNode::Token(LexType::Identifier("b"), 1),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Identifier("c"), 2),
+        SimpleNode::Token(LexType::Identifier("c"), 2),
         SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
-        SimpleNode::Token(TokenType::Identifier("a"), 0),
+        SimpleNode::Token(LexType::Identifier("a"), 0),
     ])
 )]
 // Error propagation from L3 (invalid indentation reaches L4 unchanged)
@@ -239,12 +239,12 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 #[case(
     "fn add\n        return x",
     Ok(vec![
-        SimpleNode::Token(TokenType::Function, 0),
-        SimpleNode::Token(TokenType::Identifier("add"), 0),
+        SimpleNode::Token(LexType::Function, 0),
+        SimpleNode::Token(LexType::Identifier("add"), 0),
         SimpleNode::ScopeStart(None),
         SimpleNode::ScopeStart(None),
-        SimpleNode::Token(TokenType::Return, 2),
-        SimpleNode::Token(TokenType::Identifier("x"), 2),
+        SimpleNode::Token(LexType::Return, 2),
+        SimpleNode::Token(LexType::Identifier("x"), 2),
         SimpleNode::ScopeEnd,
         SimpleNode::ScopeEnd,
     ])

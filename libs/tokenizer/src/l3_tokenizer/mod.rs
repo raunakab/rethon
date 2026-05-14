@@ -3,14 +3,14 @@ mod tests;
 
 use std::iter::Peekable;
 
-use lexer::{Brace, BraceDirection, LexKind, LexToken, TokenType};
+use lexer::{Brace, BraceDirection, LexItem, LexKind, LexType};
 
 use crate::{Error, Position, Res};
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
 
 pub(crate) fn l3_tokenize<'a>(
-    iter: impl Iterator<Item = lexer::Res<LexToken<'a>>>,
+    iter: impl Iterator<Item = lexer::Res<LexItem<'a>>>,
 ) -> impl Iterator<Item = Res<L3Token<'a>>> {
     L3Tokenizer {
         iter: iter.peekable(),
@@ -24,7 +24,7 @@ pub(crate) fn l3_tokenize<'a>(
 #[derive(Debug, Clone)]
 struct L3Tokenizer<'a, I>
 where
-    I: Iterator<Item = lexer::Res<LexToken<'a>>>,
+    I: Iterator<Item = lexer::Res<LexItem<'a>>>,
 {
     iter: Peekable<I>,
     line: usize,
@@ -35,7 +35,7 @@ where
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum L3TokenType<'a> {
-    Normal(TokenType<'a>),
+    Normal(LexType<'a>),
     Brace(Brace, BraceDirection),
 }
 
@@ -47,7 +47,7 @@ pub(crate) struct L3Token<'a> {
 
 impl<'a, I> Iterator for L3Tokenizer<'a, I>
 where
-    I: Iterator<Item = lexer::Res<LexToken<'a>>>,
+    I: Iterator<Item = lexer::Res<LexItem<'a>>>,
 {
     type Item = Res<L3Token<'a>>;
 

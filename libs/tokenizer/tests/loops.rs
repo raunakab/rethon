@@ -2,32 +2,32 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{Res, TokenType};
+use tokenizer::{LexType, Res};
 
 #[rstest::rstest]
 // Bare for with no body
 #[case(
     "for items",
     Ok(vec![
-        T(TokenType::For),
-        T(TokenType::Identifier("items")),
+        T(LexType::For),
+        T(LexType::Identifier("items")),
     ])
 )]
 // Bare loop with no body
 #[case(
     "loop",
-    Ok(vec![T(TokenType::Loop)])
+    Ok(vec![T(LexType::Loop)])
 )]
 // For loop with single-statement body
 #[case(
     "for items\n    x := item",
     Ok(vec![
-        T(TokenType::For),
-        T(TokenType::Identifier("items")),
+        T(LexType::For),
+        T(LexType::Identifier("items")),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("item")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("item")),
         Close,
     ])
 )]
@@ -35,11 +35,11 @@ use tokenizer::{Res, TokenType};
 #[case(
     "loop\n    x := 1",
     Ok(vec![
-        T(TokenType::Loop),
+        T(LexType::Loop),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
         Close,
     ])
 )]
@@ -47,15 +47,15 @@ use tokenizer::{Res, TokenType};
 #[case(
     "for items\n    x := item\n    y := x",
     Ok(vec![
-        T(TokenType::For),
-        T(TokenType::Identifier("items")),
+        T(LexType::For),
+        T(LexType::Identifier("items")),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("item")),
-        T(TokenType::Identifier("y")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("x")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("item")),
+        T(LexType::Identifier("y")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -63,15 +63,15 @@ use tokenizer::{Res, TokenType};
 #[case(
     "for xs\n    for ys\n        x := y",
     Ok(vec![
-        T(TokenType::For),
-        T(TokenType::Identifier("xs")),
+        T(LexType::For),
+        T(LexType::Identifier("xs")),
         Open,
-        T(TokenType::For),
-        T(TokenType::Identifier("ys")),
+        T(LexType::For),
+        T(LexType::Identifier("ys")),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("y")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("y")),
         Close,
         Close,
     ])
@@ -80,13 +80,13 @@ use tokenizer::{Res, TokenType};
 #[case(
     "loop\n    if done\n        return result",
     Ok(vec![
-        T(TokenType::Loop),
+        T(LexType::Loop),
         Open,
-        T(TokenType::If),
-        T(TokenType::Identifier("done")),
+        T(LexType::If),
+        T(LexType::Identifier("done")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Identifier("result")),
+        T(LexType::Return),
+        T(LexType::Identifier("result")),
         Close,
         Close,
     ])
@@ -95,18 +95,18 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n    for xs\n        x := item\n    return done",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::For),
-        T(TokenType::Identifier("xs")),
+        T(LexType::For),
+        T(LexType::Identifier("xs")),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("item")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("item")),
         Close,
-        T(TokenType::Return),
-        T(TokenType::Identifier("done")),
+        T(LexType::Return),
+        T(LexType::Identifier("done")),
         Close,
     ])
 )]

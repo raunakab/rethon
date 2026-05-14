@@ -2,74 +2,74 @@ mod common;
 
 use common::S::T;
 use common::{S, collect};
-use tokenizer::{Res, TokenType};
+use tokenizer::{LexType, Res};
 
 #[rstest::rstest]
 // Macro with a single identifier argument
 #[case(
     "!print x",
     Ok(vec![
-        T(TokenType::MacroIdentifier("print")),
-        T(TokenType::Identifier("x")),
+        T(LexType::MacroIdentifier("print")),
+        T(LexType::Identifier("x")),
     ])
 )]
 // Macro with a keyword argument (true)
 #[case(
     "!assert true",
     Ok(vec![
-        T(TokenType::MacroIdentifier("assert")),
-        T(TokenType::True),
+        T(LexType::MacroIdentifier("assert")),
+        T(LexType::True),
     ])
 )]
 // Macro with multiple arguments
 #[case(
     "!log a b c",
     Ok(vec![
-        T(TokenType::MacroIdentifier("log")),
-        T(TokenType::Identifier("a")),
-        T(TokenType::Identifier("b")),
-        T(TokenType::Identifier("c")),
+        T(LexType::MacroIdentifier("log")),
+        T(LexType::Identifier("a")),
+        T(LexType::Identifier("b")),
+        T(LexType::Identifier("c")),
     ])
 )]
 // Macro with numeric argument
 #[case(
     "!repeat 3",
     Ok(vec![
-        T(TokenType::MacroIdentifier("repeat")),
-        T(TokenType::Number("3")),
+        T(LexType::MacroIdentifier("repeat")),
+        T(LexType::Number("3")),
     ])
 )]
 // Two macros on consecutive lines
 #[case(
     "!open x\n!close x",
     Ok(vec![
-        T(TokenType::MacroIdentifier("open")),
-        T(TokenType::Identifier("x")),
-        T(TokenType::MacroIdentifier("close")),
-        T(TokenType::Identifier("x")),
+        T(LexType::MacroIdentifier("open")),
+        T(LexType::Identifier("x")),
+        T(LexType::MacroIdentifier("close")),
+        T(LexType::Identifier("x")),
     ])
 )]
 // Macro with an expression argument
 #[case(
     "!check x and y",
     Ok(vec![
-        T(TokenType::MacroIdentifier("check")),
-        T(TokenType::Identifier("x")),
-        T(TokenType::And),
-        T(TokenType::Identifier("y")),
+        T(LexType::MacroIdentifier("check")),
+        T(LexType::Identifier("x")),
+        T(LexType::And),
+        T(LexType::Identifier("y")),
     ])
 )]
 // Macro inside a function body
 #[case(
     "fn f\n    !print x\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         common::S::Open,
-        T(TokenType::MacroIdentifier("print")),
-        T(TokenType::Identifier("x")),
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::MacroIdentifier("print")),
+        T(LexType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         common::S::Close,
     ])
 )]
@@ -77,8 +77,8 @@ use tokenizer::{Res, TokenType};
 #[case(
     "x!",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::Promotion),
+        T(LexType::Identifier("x")),
+        T(LexType::Promotion),
     ])
 )]
 fn test_macros(#[case] source: &str, #[case] expected: Res<Vec<S<'static>>>) {

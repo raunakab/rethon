@@ -2,23 +2,23 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{Res, TokenType};
+use tokenizer::{LexType, Res};
 
 #[rstest::rstest]
 // Bare scope keyword with no body
 #[case(
     "scope",
-    Ok(vec![T(TokenType::Scope)])
+    Ok(vec![T(LexType::Scope)])
 )]
 // Scope with single statement
 #[case(
     "scope\n    x := 1",
     Ok(vec![
-        T(TokenType::Scope),
+        T(LexType::Scope),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
         Close,
     ])
 )]
@@ -26,17 +26,17 @@ use tokenizer::{Res, TokenType};
 #[case(
     "scope\n    x := 1\n    y := 2\n    z := 3",
     Ok(vec![
-        T(TokenType::Scope),
+        T(LexType::Scope),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
-        T(TokenType::Identifier("y")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("2")),
-        T(TokenType::Identifier("z")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("3")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
+        T(LexType::Identifier("y")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("2")),
+        T(LexType::Identifier("z")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("3")),
         Close,
     ])
 )]
@@ -44,17 +44,17 @@ use tokenizer::{Res, TokenType};
 #[case(
     "scope\n    x := 1\nscope\n    y := 2",
     Ok(vec![
-        T(TokenType::Scope),
+        T(LexType::Scope),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
         Close,
-        T(TokenType::Scope),
+        T(LexType::Scope),
         Open,
-        T(TokenType::Identifier("y")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("2")),
+        T(LexType::Identifier("y")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("2")),
         Close,
     ])
 )]
@@ -62,13 +62,13 @@ use tokenizer::{Res, TokenType};
 #[case(
     "scope\n    scope\n        x := 1",
     Ok(vec![
-        T(TokenType::Scope),
+        T(LexType::Scope),
         Open,
-        T(TokenType::Scope),
+        T(LexType::Scope),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
         Close,
         Close,
     ])
@@ -77,17 +77,17 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n    scope\n        x := 1\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Scope),
+        T(LexType::Scope),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
         Close,
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -95,13 +95,13 @@ use tokenizer::{Res, TokenType};
 #[case(
     "scope\n    if x\n        return true",
     Ok(vec![
-        T(TokenType::Scope),
+        T(LexType::Scope),
         Open,
-        T(TokenType::If),
-        T(TokenType::Identifier("x")),
+        T(LexType::If),
+        T(LexType::Identifier("x")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::True),
+        T(LexType::Return),
+        T(LexType::True),
         Close,
         Close,
     ])

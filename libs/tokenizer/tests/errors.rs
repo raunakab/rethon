@@ -18,7 +18,7 @@ use tokenizer::Error;
 #[case("\t", Error::Lex(lexer::Error::InvalidWhitespace("\t".to_string())))]
 #[case("a\tb", Error::Lex(lexer::Error::InvalidWhitespace("\t".to_string())))]
 // Unknown token (lex-level)
-#[case("\x01", Error::Lex(lexer::Error::UnknownToken("\x01".to_string())))]
+#[case("\x01", Error::Lex(lexer::Error::UnknownItem("\x01".to_string())))]
 fn test_errors(#[case] source: &str, #[case] expected: Error) {
     assert_eq!(collect(source).unwrap_err(), expected);
 }

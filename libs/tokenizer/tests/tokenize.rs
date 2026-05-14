@@ -2,7 +2,7 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{Res, StringType, TokenType};
+use tokenizer::{LexType, Res, StringType};
 
 #[rstest::rstest]
 // Empty source
@@ -11,20 +11,20 @@ use tokenizer::{Res, StringType, TokenType};
 #[case(
     "x := 42",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("42")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("42")),
     ])
 )]
 // Function with body
 #[case(
     "fn add\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("add")),
+        T(LexType::Function),
+        T(LexType::Identifier("add")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -32,20 +32,20 @@ use tokenizer::{Res, StringType, TokenType};
 #[case(
     "x := \"hello\"",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::String("hello", StringType::Normal)),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::String("hello", StringType::Normal)),
     ])
 )]
 // CRLF treated identically to LF
 #[case(
     "fn f\r\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]

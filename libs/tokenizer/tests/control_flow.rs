@@ -2,60 +2,60 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{Res, TokenType};
+use tokenizer::{LexType, Res};
 
 #[rstest::rstest]
 // Bare return with no value
-#[case("return", Ok(vec![T(TokenType::Return)]))]
+#[case("return", Ok(vec![T(LexType::Return)]))]
 // Return with identifier value
 #[case(
     "return x",
-    Ok(vec![T(TokenType::Return), T(TokenType::Identifier("x"))])
+    Ok(vec![T(LexType::Return), T(LexType::Identifier("x"))])
 )]
 // Return with numeric value
 #[case(
     "return 42",
-    Ok(vec![T(TokenType::Return), T(TokenType::Number("42"))])
+    Ok(vec![T(LexType::Return), T(LexType::Number("42"))])
 )]
 // Return with boolean value
 #[case(
     "return true",
-    Ok(vec![T(TokenType::Return), T(TokenType::True)])
+    Ok(vec![T(LexType::Return), T(LexType::True)])
 )]
 // Yield with value
 #[case(
     "yield x",
-    Ok(vec![T(TokenType::Yield), T(TokenType::Identifier("x"))])
+    Ok(vec![T(LexType::Yield), T(LexType::Identifier("x"))])
 )]
 // Throw with value
 #[case(
     "throw err",
-    Ok(vec![T(TokenType::Throw), T(TokenType::Identifier("err"))])
+    Ok(vec![T(LexType::Throw), T(LexType::Identifier("err"))])
 )]
 // Standalone panic
-#[case("panic", Ok(vec![T(TokenType::Panic)]))]
+#[case("panic", Ok(vec![T(LexType::Panic)]))]
 // Standalone todo
-#[case("todo", Ok(vec![T(TokenType::Todo)]))]
+#[case("todo", Ok(vec![T(LexType::Todo)]))]
 // Standalone unimplemented
-#[case("unimplemented", Ok(vec![T(TokenType::Unimplemented)]))]
+#[case("unimplemented", Ok(vec![T(LexType::Unimplemented)]))]
 // Multiple type-hole keywords
 #[case(
     "panic\ntodo\nunimplemented",
     Ok(vec![
-        T(TokenType::Panic),
-        T(TokenType::Todo),
-        T(TokenType::Unimplemented),
+        T(LexType::Panic),
+        T(LexType::Todo),
+        T(LexType::Unimplemented),
     ])
 )]
 // Return inside function body
 #[case(
     "fn f\n    return x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -63,11 +63,11 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n    yield x",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Yield),
-        T(TokenType::Identifier("x")),
+        T(LexType::Yield),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -75,11 +75,11 @@ use tokenizer::{Res, TokenType};
 #[case(
     "if err\n    throw err",
     Ok(vec![
-        T(TokenType::If),
-        T(TokenType::Identifier("err")),
+        T(LexType::If),
+        T(LexType::Identifier("err")),
         Open,
-        T(TokenType::Throw),
-        T(TokenType::Identifier("err")),
+        T(LexType::Throw),
+        T(LexType::Identifier("err")),
         Close,
     ])
 )]
@@ -87,17 +87,17 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n    if x\n        return true\n    return false",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::If),
-        T(TokenType::Identifier("x")),
+        T(LexType::If),
+        T(LexType::Identifier("x")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::True),
+        T(LexType::Return),
+        T(LexType::True),
         Close,
-        T(TokenType::Return),
-        T(TokenType::False),
+        T(LexType::Return),
+        T(LexType::False),
         Close,
     ])
 )]

@@ -2,26 +2,26 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{Res, TokenType};
+use tokenizer::{LexType, Res};
 
 #[rstest::rstest]
 // Bare if with no body
 #[case(
     "if cond",
     Ok(vec![
-        T(TokenType::If),
-        T(TokenType::Identifier("cond")),
+        T(LexType::If),
+        T(LexType::Identifier("cond")),
     ])
 )]
 // Simple if with single-statement body
 #[case(
     "if cond\n    return true",
     Ok(vec![
-        T(TokenType::If),
-        T(TokenType::Identifier("cond")),
+        T(LexType::If),
+        T(LexType::Identifier("cond")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::True),
+        T(LexType::Return),
+        T(LexType::True),
         Close,
     ])
 )]
@@ -29,14 +29,14 @@ use tokenizer::{Res, TokenType};
 #[case(
     "if cond\n    x := 1\n    return x",
     Ok(vec![
-        T(TokenType::If),
-        T(TokenType::Identifier("cond")),
+        T(LexType::If),
+        T(LexType::Identifier("cond")),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -44,16 +44,16 @@ use tokenizer::{Res, TokenType};
 #[case(
     "if cond\n    return true\nelse\n    return false",
     Ok(vec![
-        T(TokenType::If),
-        T(TokenType::Identifier("cond")),
+        T(LexType::If),
+        T(LexType::Identifier("cond")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::True),
+        T(LexType::Return),
+        T(LexType::True),
         Close,
-        T(TokenType::Else),
+        T(LexType::Else),
         Open,
-        T(TokenType::Return),
-        T(TokenType::False),
+        T(LexType::Return),
+        T(LexType::False),
         Close,
     ])
 )]
@@ -61,22 +61,22 @@ use tokenizer::{Res, TokenType};
 #[case(
     "if cond\n    x := 1\n    return x\nelse\n    y := 2\n    return y",
     Ok(vec![
-        T(TokenType::If),
-        T(TokenType::Identifier("cond")),
+        T(LexType::If),
+        T(LexType::Identifier("cond")),
         Open,
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("1")),
-        T(TokenType::Return),
-        T(TokenType::Identifier("x")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("1")),
+        T(LexType::Return),
+        T(LexType::Identifier("x")),
         Close,
-        T(TokenType::Else),
+        T(LexType::Else),
         Open,
-        T(TokenType::Identifier("y")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Number("2")),
-        T(TokenType::Return),
-        T(TokenType::Identifier("y")),
+        T(LexType::Identifier("y")),
+        T(LexType::StaticAssignment),
+        T(LexType::Number("2")),
+        T(LexType::Return),
+        T(LexType::Identifier("y")),
         Close,
     ])
 )]
@@ -84,14 +84,14 @@ use tokenizer::{Res, TokenType};
 #[case(
     "if a\n    if b\n        return true",
     Ok(vec![
-        T(TokenType::If),
-        T(TokenType::Identifier("a")),
+        T(LexType::If),
+        T(LexType::Identifier("a")),
         Open,
-        T(TokenType::If),
-        T(TokenType::Identifier("b")),
+        T(LexType::If),
+        T(LexType::Identifier("b")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::True),
+        T(LexType::Return),
+        T(LexType::True),
         Close,
         Close,
     ])
@@ -100,24 +100,24 @@ use tokenizer::{Res, TokenType};
 #[case(
     "if a\n    return 1\nelse\n    if b\n        return 2\n    else\n        return 3",
     Ok(vec![
-        T(TokenType::If),
-        T(TokenType::Identifier("a")),
+        T(LexType::If),
+        T(LexType::Identifier("a")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Number("1")),
+        T(LexType::Return),
+        T(LexType::Number("1")),
         Close,
-        T(TokenType::Else),
+        T(LexType::Else),
         Open,
-        T(TokenType::If),
-        T(TokenType::Identifier("b")),
+        T(LexType::If),
+        T(LexType::Identifier("b")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Number("2")),
+        T(LexType::Return),
+        T(LexType::Number("2")),
         Close,
-        T(TokenType::Else),
+        T(LexType::Else),
         Open,
-        T(TokenType::Return),
-        T(TokenType::Number("3")),
+        T(LexType::Return),
+        T(LexType::Number("3")),
         Close,
         Close,
     ])
@@ -126,17 +126,17 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n    if x\n        return true\n    return false",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::If),
-        T(TokenType::Identifier("x")),
+        T(LexType::If),
+        T(LexType::Identifier("x")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::True),
+        T(LexType::Return),
+        T(LexType::True),
         Close,
-        T(TokenType::Return),
-        T(TokenType::False),
+        T(LexType::Return),
+        T(LexType::False),
         Close,
     ])
 )]
@@ -144,13 +144,13 @@ use tokenizer::{Res, TokenType};
 #[case(
     "if x and y\n    return true",
     Ok(vec![
-        T(TokenType::If),
-        T(TokenType::Identifier("x")),
-        T(TokenType::And),
-        T(TokenType::Identifier("y")),
+        T(LexType::If),
+        T(LexType::Identifier("x")),
+        T(LexType::And),
+        T(LexType::Identifier("y")),
         Open,
-        T(TokenType::Return),
-        T(TokenType::True),
+        T(LexType::Return),
+        T(LexType::True),
         Close,
     ])
 )]

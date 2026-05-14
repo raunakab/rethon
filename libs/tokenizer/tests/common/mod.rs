@@ -1,8 +1,8 @@
-use tokenizer::{Res, Token, TokenType, tokenize};
+use tokenizer::{LexType, Res, Token, tokenize};
 
 #[derive(Debug, PartialEq)]
 pub enum S<'a> {
-    T(TokenType<'a>),
+    T(LexType<'a>),
     Open,
     Close,
 }

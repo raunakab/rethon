@@ -7,22 +7,22 @@ use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 
 use crate::{Error, Res};
 
-pub(crate) fn tokenize(source: &str) -> impl Iterator<Item = Res<Token<'_>>> {
-    Tokenizer {
+pub(crate) fn segment(source: &str) -> impl Iterator<Item = Res<Segment<'_>>> {
+    Segmenter {
         source,
         iter: source.grapheme_indices(true),
         iter_state: None,
     }
 }
 
-struct Tokenizer<'a> {
+struct Segmenter<'a> {
     source: &'a str,
     iter: GraphemeIndices<'a>,
-    iter_state: Option<(usize, TokenKind)>,
+    iter_state: Option<(usize, SegmentKind)>,
 }
 
-impl<'a> Tokenizer<'a> {
-    fn parse_string(&mut self, opening_start: usize) -> Res<Token<'a>> {
+impl<'a> Segmenter<'a> {
+    fn parse_string(&mut self, opening_start: usize) -> Res<Segment<'a>> {
         let opening_end = opening_start + 1;
 
         Ok(loop {
@@ -34,10 +34,10 @@ impl<'a> Tokenizer<'a> {
 
                     self.iter_state = None;
                     let range = opening_end..index;
-                    break Token {
-                        token: &self.source[range.clone()],
+                    break Segment {
+                        segment: &self.source[range.clone()],
                         range,
-                        kind: TokenKind::String,
+                        kind: SegmentKind::String,
                     };
                 }
                 None => return Err(Error::UnterminatedString(opening_start)),
@@ -46,8 +46,8 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
-impl<'a> Iterator for Tokenizer<'a> {
-    type Item = Res<Token<'a>>;
+impl<'a> Iterator for Segmenter<'a> {
+    type Item = Res<Segment<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -55,8 +55,8 @@ impl<'a> Iterator for Tokenizer<'a> {
                 match self.iter_state {
                     Some((prev_index, prev_kind)) => {
                         self.iter_state = None;
-                        break Some(Ok(Token {
-                            token: &self.source[prev_index..],
+                        break Some(Ok(Segment {
+                            segment: &self.source[prev_index..],
                             range: prev_index..self.source.len(),
                             kind: prev_kind,
                         }));
@@ -70,20 +70,20 @@ impl<'a> Iterator for Tokenizer<'a> {
                     None => {
                         break Some(self.parse_string(curr_index));
                     }
-                    Some((prev_index, TokenKind::String)) => {
+                    Some((prev_index, SegmentKind::String)) => {
                         self.iter_state = None;
                         let range = (prev_index + 1)..curr_index;
-                        break Some(Ok(Token {
-                            token: &self.source[range.clone()],
+                        break Some(Ok(Segment {
+                            segment: &self.source[range.clone()],
                             range,
-                            kind: TokenKind::String,
+                            kind: SegmentKind::String,
                         }));
                     }
                     Some((prev_index, prev_kind)) => {
-                        self.iter_state = Some((curr_index, TokenKind::String));
+                        self.iter_state = Some((curr_index, SegmentKind::String));
                         let range = prev_index..curr_index;
-                        break Some(Ok(Token {
-                            token: &self.source[range.clone()],
+                        break Some(Ok(Segment {
+                            segment: &self.source[range.clone()],
                             range,
                             kind: prev_kind,
                         }));
@@ -91,7 +91,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                 }
             }
 
-            if let Some((quote_index, TokenKind::String)) = self.iter_state {
+            if let Some((quote_index, SegmentKind::String)) = self.iter_state {
                 self.iter_state = None;
                 break Some(self.parse_string(quote_index));
             }
@@ -99,13 +99,13 @@ impl<'a> Iterator for Tokenizer<'a> {
             let curr_kind = curr_grapheme.into();
             match self.iter_state {
                 Some((prev_index, prev_kind)) => {
-                    if matches!(prev_kind, TokenKind::Punctuation)
-                        || matches!(prev_kind, TokenKind::Whitespace)
+                    if matches!(prev_kind, SegmentKind::Punctuation)
+                        || matches!(prev_kind, SegmentKind::Whitespace)
                         || curr_kind != prev_kind
                     {
                         self.iter_state = Some((curr_index, curr_kind));
-                        break Some(Ok(Token {
-                            token: &self.source[prev_index..curr_index],
+                        break Some(Ok(Segment {
+                            segment: &self.source[prev_index..curr_index],
                             range: prev_index..curr_index,
                             kind: prev_kind,
                         }));
@@ -118,14 +118,14 @@ impl<'a> Iterator for Tokenizer<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Token<'a> {
-    pub(crate) token: &'a str,
+pub(crate) struct Segment<'a> {
+    pub(crate) segment: &'a str,
     pub(crate) range: Range<usize>,
-    pub(crate) kind: TokenKind,
+    pub(crate) kind: SegmentKind,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum TokenKind {
+pub(crate) enum SegmentKind {
     Whitespace,
     Keyword,
     Numeric,
@@ -134,7 +134,7 @@ pub(crate) enum TokenKind {
     Unknown,
 }
 
-impl<'a> From<&'a str> for TokenKind {
+impl<'a> From<&'a str> for SegmentKind {
     fn from(source: &'a str) -> Self {
         if source == "\r\n" {
             return Self::Whitespace;

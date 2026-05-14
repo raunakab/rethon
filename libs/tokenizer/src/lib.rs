@@ -18,7 +18,7 @@ use std::ops::Range;
 
 use thiserror::Error;
 
-pub use lexer::{Brace, BraceDirection, StringType, TokenType};
+pub use lexer::{Brace, BraceDirection, LexType, StringType};
 
 use crate::{
     l3_tokenizer::{INDENTATION_SIZE, l3_tokenize},
@@ -45,7 +45,7 @@ pub enum Error {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token<'a> {
-    Token(TokenType<'a>, Position),
+    Token(LexType<'a>, Position),
     ScopeStart(Option<(Brace, Position)>),
     ScopeEnd(Option<(Brace, Position)>),
 }

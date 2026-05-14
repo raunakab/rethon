@@ -2,67 +2,67 @@ mod common;
 
 use common::S::T;
 use common::{S, collect};
-use tokenizer::{Res, TokenType};
+use tokenizer::{LexType, Res};
 
 #[rstest::rstest]
 // ── Arithmetic ────────────────────────────────────────────────────────────────
-#[case("a + b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Plus), T(TokenType::Identifier("b"))]))]
-#[case("a - b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Minus), T(TokenType::Identifier("b"))]))]
-#[case("a * b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Asterisk), T(TokenType::Identifier("b"))]))]
-#[case("a / b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Slash), T(TokenType::Identifier("b"))]))]
-#[case("a ** b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::DoubleAsterisk), T(TokenType::Identifier("b"))]))]
+#[case("a + b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Plus), T(LexType::Identifier("b"))]))]
+#[case("a - b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Minus), T(LexType::Identifier("b"))]))]
+#[case("a * b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Asterisk), T(LexType::Identifier("b"))]))]
+#[case("a / b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Slash), T(LexType::Identifier("b"))]))]
+#[case("a ** b", Ok(vec![T(LexType::Identifier("a")), T(LexType::DoubleAsterisk), T(LexType::Identifier("b"))]))]
 // ── Comparison ────────────────────────────────────────────────────────────────
-#[case("a == b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Equals), T(TokenType::Identifier("b"))]))]
-#[case("a >= b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::GreaterOrEqual), T(TokenType::Identifier("b"))]))]
-#[case("a <= b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::LesserOrEqual), T(TokenType::Identifier("b"))]))]
-#[case("a > b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Greater), T(TokenType::Identifier("b"))]))]
-#[case("a < b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Lesser), T(TokenType::Identifier("b"))]))]
+#[case("a == b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Equals), T(LexType::Identifier("b"))]))]
+#[case("a >= b", Ok(vec![T(LexType::Identifier("a")), T(LexType::GreaterOrEqual), T(LexType::Identifier("b"))]))]
+#[case("a <= b", Ok(vec![T(LexType::Identifier("a")), T(LexType::LesserOrEqual), T(LexType::Identifier("b"))]))]
+#[case("a > b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Greater), T(LexType::Identifier("b"))]))]
+#[case("a < b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Lesser), T(LexType::Identifier("b"))]))]
 // ── Boolean ───────────────────────────────────────────────────────────────────
-#[case("not a", Ok(vec![T(TokenType::Not), T(TokenType::Identifier("a"))]))]
-#[case("a and b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::And), T(TokenType::Identifier("b"))]))]
-#[case("a or b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Or), T(TokenType::Identifier("b"))]))]
+#[case("not a", Ok(vec![T(LexType::Not), T(LexType::Identifier("a"))]))]
+#[case("a and b", Ok(vec![T(LexType::Identifier("a")), T(LexType::And), T(LexType::Identifier("b"))]))]
+#[case("a or b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Or), T(LexType::Identifier("b"))]))]
 // ── Pipe ──────────────────────────────────────────────────────────────────────
-#[case("x |> f", Ok(vec![T(TokenType::Identifier("x")), T(TokenType::PipeForward), T(TokenType::Identifier("f"))]))]
-#[case("x |>> g", Ok(vec![T(TokenType::Identifier("x")), T(TokenType::PipeDoubleForward), T(TokenType::Identifier("g"))]))]
+#[case("x |> f", Ok(vec![T(LexType::Identifier("x")), T(LexType::PipeForward), T(LexType::Identifier("f"))]))]
+#[case("x |>> g", Ok(vec![T(LexType::Identifier("x")), T(LexType::PipeDoubleForward), T(LexType::Identifier("g"))]))]
 #[case(
     "x |> f |>> g",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::PipeForward),
-        T(TokenType::Identifier("f")),
-        T(TokenType::PipeDoubleForward),
-        T(TokenType::Identifier("g")),
+        T(LexType::Identifier("x")),
+        T(LexType::PipeForward),
+        T(LexType::Identifier("f")),
+        T(LexType::PipeDoubleForward),
+        T(LexType::Identifier("g")),
     ])
 )]
 // ── Bitwise / shift ───────────────────────────────────────────────────────────
-#[case("a | b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Pipe), T(TokenType::Identifier("b"))]))]
-#[case("a >> b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::DoubleGreater), T(TokenType::Identifier("b"))]))]
-#[case("a << b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::DoubleLesser), T(TokenType::Identifier("b"))]))]
+#[case("a | b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Pipe), T(LexType::Identifier("b"))]))]
+#[case("a >> b", Ok(vec![T(LexType::Identifier("a")), T(LexType::DoubleGreater), T(LexType::Identifier("b"))]))]
+#[case("a << b", Ok(vec![T(LexType::Identifier("a")), T(LexType::DoubleLesser), T(LexType::Identifier("b"))]))]
 // ── Misc ──────────────────────────────────────────────────────────────────────
-#[case("x?", Ok(vec![T(TokenType::Identifier("x")), T(TokenType::Coalescence)]))]
-#[case("@x", Ok(vec![T(TokenType::Ampersand), T(TokenType::Identifier("x"))]))]
-#[case("x!", Ok(vec![T(TokenType::Identifier("x")), T(TokenType::Promotion)]))]
-#[case("a..b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::DoubleDot), T(TokenType::Identifier("b"))]))]
-#[case("a -> b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Arrow), T(TokenType::Identifier("b"))]))]
-#[case("a -- b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::DoubleMinus), T(TokenType::Identifier("b"))]))]
+#[case("x?", Ok(vec![T(LexType::Identifier("x")), T(LexType::Coalescence)]))]
+#[case("@x", Ok(vec![T(LexType::Ampersand), T(LexType::Identifier("x"))]))]
+#[case("x!", Ok(vec![T(LexType::Identifier("x")), T(LexType::Promotion)]))]
+#[case("a..b", Ok(vec![T(LexType::Identifier("a")), T(LexType::DoubleDot), T(LexType::Identifier("b"))]))]
+#[case("a -> b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Arrow), T(LexType::Identifier("b"))]))]
+#[case("a -- b", Ok(vec![T(LexType::Identifier("a")), T(LexType::DoubleMinus), T(LexType::Identifier("b"))]))]
 // ── Dot disambiguation: single dot vs double dot ──────────────────────────────
-#[case("a.b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::Dot), T(TokenType::Identifier("b"))]))]
-#[case("a..b", Ok(vec![T(TokenType::Identifier("a")), T(TokenType::DoubleDot), T(TokenType::Identifier("b"))]))]
+#[case("a.b", Ok(vec![T(LexType::Identifier("a")), T(LexType::Dot), T(LexType::Identifier("b"))]))]
+#[case("a..b", Ok(vec![T(LexType::Identifier("a")), T(LexType::DoubleDot), T(LexType::Identifier("b"))]))]
 // ── Colon disambiguation: colon vs := ────────────────────────────────────────
-#[case("x : y", Ok(vec![T(TokenType::Identifier("x")), T(TokenType::Colon), T(TokenType::Identifier("y"))]))]
+#[case("x : y", Ok(vec![T(LexType::Identifier("x")), T(LexType::Colon), T(LexType::Identifier("y"))]))]
 // ── Chained expression ────────────────────────────────────────────────────────
 #[case(
     "a + b * c - d / e",
     Ok(vec![
-        T(TokenType::Identifier("a")),
-        T(TokenType::Plus),
-        T(TokenType::Identifier("b")),
-        T(TokenType::Asterisk),
-        T(TokenType::Identifier("c")),
-        T(TokenType::Minus),
-        T(TokenType::Identifier("d")),
-        T(TokenType::Slash),
-        T(TokenType::Identifier("e")),
+        T(LexType::Identifier("a")),
+        T(LexType::Plus),
+        T(LexType::Identifier("b")),
+        T(LexType::Asterisk),
+        T(LexType::Identifier("c")),
+        T(LexType::Minus),
+        T(LexType::Identifier("d")),
+        T(LexType::Slash),
+        T(LexType::Identifier("e")),
     ])
 )]
 fn test_operators(#[case] source: &str, #[case] expected: Res<Vec<S<'static>>>) {

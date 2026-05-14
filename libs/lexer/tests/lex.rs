@@ -1,74 +1,74 @@
-use lexer::{Brace, BraceDirection, LexKind, Res, StringType, TokenType, lex};
+use lexer::{Brace, BraceDirection, LexKind, LexType, Res, StringType, lex};
 
 #[rstest::rstest]
 // Empty source produces no tokens
 #[case("", Ok(vec![]))]
 // Single identifier
-#[case("x", Ok(vec![LexKind::Normal(TokenType::Identifier("x"))]))]
+#[case("x", Ok(vec![LexKind::Normal(LexType::Identifier("x"))]))]
 // Keywords
-#[case("fn", Ok(vec![LexKind::Normal(TokenType::Function)]))]
-#[case("mut", Ok(vec![LexKind::Normal(TokenType::Mutable)]))]
-#[case("scope", Ok(vec![LexKind::Normal(TokenType::Scope)]))]
-#[case("return", Ok(vec![LexKind::Normal(TokenType::Return)]))]
-#[case("yield", Ok(vec![LexKind::Normal(TokenType::Yield)]))]
-#[case("throw", Ok(vec![LexKind::Normal(TokenType::Throw)]))]
-#[case("otherwise", Ok(vec![LexKind::Normal(TokenType::Otherwise)]))]
-#[case("not", Ok(vec![LexKind::Normal(TokenType::Not)]))]
-#[case("and", Ok(vec![LexKind::Normal(TokenType::And)]))]
-#[case("or", Ok(vec![LexKind::Normal(TokenType::Or)]))]
-#[case("for", Ok(vec![LexKind::Normal(TokenType::For)]))]
-#[case("loop", Ok(vec![LexKind::Normal(TokenType::Loop)]))]
-#[case("if", Ok(vec![LexKind::Normal(TokenType::If)]))]
-#[case("else", Ok(vec![LexKind::Normal(TokenType::Else)]))]
-#[case("struct", Ok(vec![LexKind::Normal(TokenType::Struct)]))]
-#[case("enum", Ok(vec![LexKind::Normal(TokenType::Enum)]))]
-#[case("panic", Ok(vec![LexKind::Normal(TokenType::Panic)]))]
-#[case("todo", Ok(vec![LexKind::Normal(TokenType::Todo)]))]
-#[case("unimplemented", Ok(vec![LexKind::Normal(TokenType::Unimplemented)]))]
-#[case("true", Ok(vec![LexKind::Normal(TokenType::True)]))]
-#[case("false", Ok(vec![LexKind::Normal(TokenType::False)]))]
+#[case("fn", Ok(vec![LexKind::Normal(LexType::Function)]))]
+#[case("mut", Ok(vec![LexKind::Normal(LexType::Mutable)]))]
+#[case("scope", Ok(vec![LexKind::Normal(LexType::Scope)]))]
+#[case("return", Ok(vec![LexKind::Normal(LexType::Return)]))]
+#[case("yield", Ok(vec![LexKind::Normal(LexType::Yield)]))]
+#[case("throw", Ok(vec![LexKind::Normal(LexType::Throw)]))]
+#[case("otherwise", Ok(vec![LexKind::Normal(LexType::Otherwise)]))]
+#[case("not", Ok(vec![LexKind::Normal(LexType::Not)]))]
+#[case("and", Ok(vec![LexKind::Normal(LexType::And)]))]
+#[case("or", Ok(vec![LexKind::Normal(LexType::Or)]))]
+#[case("for", Ok(vec![LexKind::Normal(LexType::For)]))]
+#[case("loop", Ok(vec![LexKind::Normal(LexType::Loop)]))]
+#[case("if", Ok(vec![LexKind::Normal(LexType::If)]))]
+#[case("else", Ok(vec![LexKind::Normal(LexType::Else)]))]
+#[case("struct", Ok(vec![LexKind::Normal(LexType::Struct)]))]
+#[case("enum", Ok(vec![LexKind::Normal(LexType::Enum)]))]
+#[case("panic", Ok(vec![LexKind::Normal(LexType::Panic)]))]
+#[case("todo", Ok(vec![LexKind::Normal(LexType::Todo)]))]
+#[case("unimplemented", Ok(vec![LexKind::Normal(LexType::Unimplemented)]))]
+#[case("true", Ok(vec![LexKind::Normal(LexType::True)]))]
+#[case("false", Ok(vec![LexKind::Normal(LexType::False)]))]
 // `f` alone is an identifier, not a formatted string prefix
-#[case("f", Ok(vec![LexKind::Normal(TokenType::Identifier("f"))]))]
+#[case("f", Ok(vec![LexKind::Normal(LexType::Identifier("f"))]))]
 // Numbers
-#[case("42", Ok(vec![LexKind::Normal(TokenType::Number("42"))]))]
-#[case("0", Ok(vec![LexKind::Normal(TokenType::Number("0"))]))]
-#[case("3.14", Ok(vec![LexKind::Normal(TokenType::Float("3", Some("14")))]))]
-#[case("1.", Ok(vec![LexKind::Normal(TokenType::Float("1", None))]))]
-#[case("1. 0", Ok(vec![LexKind::Normal(TokenType::Float("1", None)), LexKind::Whitespace(1), LexKind::Normal(TokenType::Number("0"))]))]
-#[case("0 1. 0", Ok(vec![LexKind::Normal(TokenType::Number("0")), LexKind::Whitespace(1), LexKind::Normal(TokenType::Float("1", None)), LexKind::Whitespace(1), LexKind::Normal(TokenType::Number("0"))]))]
+#[case("42", Ok(vec![LexKind::Normal(LexType::Number("42"))]))]
+#[case("0", Ok(vec![LexKind::Normal(LexType::Number("0"))]))]
+#[case("3.14", Ok(vec![LexKind::Normal(LexType::Float("3", Some("14")))]))]
+#[case("1.", Ok(vec![LexKind::Normal(LexType::Float("1", None))]))]
+#[case("1. 0", Ok(vec![LexKind::Normal(LexType::Float("1", None)), LexKind::Whitespace(1), LexKind::Normal(LexType::Number("0"))]))]
+#[case("0 1. 0", Ok(vec![LexKind::Normal(LexType::Number("0")), LexKind::Whitespace(1), LexKind::Normal(LexType::Float("1", None)), LexKind::Whitespace(1), LexKind::Normal(LexType::Number("0"))]))]
 // Strings
-#[case("\"hello\"", Ok(vec![LexKind::Normal(TokenType::String("hello", StringType::Normal))]))]
-#[case("\"\"", Ok(vec![LexKind::Normal(TokenType::String("", StringType::Normal))]))]
-#[case("f\"hi ${name}\"", Ok(vec![LexKind::Normal(TokenType::String("hi ${name}", StringType::Formatted))]))]
+#[case("\"hello\"", Ok(vec![LexKind::Normal(LexType::String("hello", StringType::Normal))]))]
+#[case("\"\"", Ok(vec![LexKind::Normal(LexType::String("", StringType::Normal))]))]
+#[case("f\"hi ${name}\"", Ok(vec![LexKind::Normal(LexType::String("hi ${name}", StringType::Formatted))]))]
 // Operators
-#[case(":=", Ok(vec![LexKind::Normal(TokenType::StaticAssignment)]))]
-#[case("=", Ok(vec![LexKind::Normal(TokenType::Assignment)]))]
-#[case("==", Ok(vec![LexKind::Normal(TokenType::Equals)]))]
-#[case("!", Ok(vec![LexKind::Normal(TokenType::Promotion)]))]
-#[case("!foo", Ok(vec![LexKind::Normal(TokenType::MacroIdentifier("foo"))]))]
-#[case("?", Ok(vec![LexKind::Normal(TokenType::Coalescence)]))]
-#[case("@", Ok(vec![LexKind::Normal(TokenType::Ampersand)]))]
-#[case(":", Ok(vec![LexKind::Normal(TokenType::Colon)]))]
-#[case(".", Ok(vec![LexKind::Normal(TokenType::Dot)]))]
-#[case("..", Ok(vec![LexKind::Normal(TokenType::DoubleDot)]))]
-#[case("+", Ok(vec![LexKind::Normal(TokenType::Plus)]))]
-#[case("-", Ok(vec![LexKind::Normal(TokenType::Minus)]))]
-#[case("--", Ok(vec![LexKind::Normal(TokenType::DoubleMinus)]))]
-#[case("->", Ok(vec![LexKind::Normal(TokenType::Arrow)]))]
-#[case("*", Ok(vec![LexKind::Normal(TokenType::Asterisk)]))]
-#[case("**", Ok(vec![LexKind::Normal(TokenType::DoubleAsterisk)]))]
-#[case("/", Ok(vec![LexKind::Normal(TokenType::Slash)]))]
-#[case(";", Ok(vec![LexKind::Normal(TokenType::Semicolon)]))]
-#[case(",", Ok(vec![LexKind::Normal(TokenType::Comma)]))]
-#[case("|", Ok(vec![LexKind::Normal(TokenType::Pipe)]))]
-#[case("|>", Ok(vec![LexKind::Normal(TokenType::PipeForward)]))]
-#[case("|>>", Ok(vec![LexKind::Normal(TokenType::PipeDoubleForward)]))]
-#[case(">", Ok(vec![LexKind::Normal(TokenType::Greater)]))]
-#[case(">>", Ok(vec![LexKind::Normal(TokenType::DoubleGreater)]))]
-#[case(">=", Ok(vec![LexKind::Normal(TokenType::GreaterOrEqual)]))]
-#[case("<", Ok(vec![LexKind::Normal(TokenType::Lesser)]))]
-#[case("<<", Ok(vec![LexKind::Normal(TokenType::DoubleLesser)]))]
-#[case("<=", Ok(vec![LexKind::Normal(TokenType::LesserOrEqual)]))]
+#[case(":=", Ok(vec![LexKind::Normal(LexType::StaticAssignment)]))]
+#[case("=", Ok(vec![LexKind::Normal(LexType::Assignment)]))]
+#[case("==", Ok(vec![LexKind::Normal(LexType::Equals)]))]
+#[case("!", Ok(vec![LexKind::Normal(LexType::Promotion)]))]
+#[case("!foo", Ok(vec![LexKind::Normal(LexType::MacroIdentifier("foo"))]))]
+#[case("?", Ok(vec![LexKind::Normal(LexType::Coalescence)]))]
+#[case("@", Ok(vec![LexKind::Normal(LexType::Ampersand)]))]
+#[case(":", Ok(vec![LexKind::Normal(LexType::Colon)]))]
+#[case(".", Ok(vec![LexKind::Normal(LexType::Dot)]))]
+#[case("..", Ok(vec![LexKind::Normal(LexType::DoubleDot)]))]
+#[case("+", Ok(vec![LexKind::Normal(LexType::Plus)]))]
+#[case("-", Ok(vec![LexKind::Normal(LexType::Minus)]))]
+#[case("--", Ok(vec![LexKind::Normal(LexType::DoubleMinus)]))]
+#[case("->", Ok(vec![LexKind::Normal(LexType::Arrow)]))]
+#[case("*", Ok(vec![LexKind::Normal(LexType::Asterisk)]))]
+#[case("**", Ok(vec![LexKind::Normal(LexType::DoubleAsterisk)]))]
+#[case("/", Ok(vec![LexKind::Normal(LexType::Slash)]))]
+#[case(";", Ok(vec![LexKind::Normal(LexType::Semicolon)]))]
+#[case(",", Ok(vec![LexKind::Normal(LexType::Comma)]))]
+#[case("|", Ok(vec![LexKind::Normal(LexType::Pipe)]))]
+#[case("|>", Ok(vec![LexKind::Normal(LexType::PipeForward)]))]
+#[case("|>>", Ok(vec![LexKind::Normal(LexType::PipeDoubleForward)]))]
+#[case(">", Ok(vec![LexKind::Normal(LexType::Greater)]))]
+#[case(">>", Ok(vec![LexKind::Normal(LexType::DoubleGreater)]))]
+#[case(">=", Ok(vec![LexKind::Normal(LexType::GreaterOrEqual)]))]
+#[case("<", Ok(vec![LexKind::Normal(LexType::Lesser)]))]
+#[case("<<", Ok(vec![LexKind::Normal(LexType::DoubleLesser)]))]
+#[case("<=", Ok(vec![LexKind::Normal(LexType::LesserOrEqual)]))]
 // Braces
 #[case("(", Ok(vec![LexKind::Brace(Brace::Round, BraceDirection::Open)]))]
 #[case(")", Ok(vec![LexKind::Brace(Brace::Round, BraceDirection::Close)]))]
@@ -79,28 +79,28 @@ use lexer::{Brace, BraceDirection, LexKind, Res, StringType, TokenType, lex};
 // Whitespace and newlines
 #[case("\n", Ok(vec![LexKind::Newline]))]
 #[case("a\nb", Ok(vec![
-    LexKind::Normal(TokenType::Identifier("a")),
+    LexKind::Normal(LexType::Identifier("a")),
     LexKind::Newline,
-    LexKind::Normal(TokenType::Identifier("b")),
+    LexKind::Normal(LexType::Identifier("b")),
 ]))]
 #[case("x := 42", Ok(vec![
-    LexKind::Normal(TokenType::Identifier("x")),
+    LexKind::Normal(LexType::Identifier("x")),
     LexKind::Whitespace(1),
-    LexKind::Normal(TokenType::StaticAssignment),
+    LexKind::Normal(LexType::StaticAssignment),
     LexKind::Whitespace(1),
-    LexKind::Normal(TokenType::Number("42")),
+    LexKind::Normal(LexType::Number("42")),
 ]))]
 // Function call with parens
 #[case("func()", Ok(vec![
-    LexKind::Normal(TokenType::Identifier("func")),
+    LexKind::Normal(LexType::Identifier("func")),
     LexKind::Brace(Brace::Round, BraceDirection::Open),
     LexKind::Brace(Brace::Round, BraceDirection::Close),
 ]))]
 // Error cases
 #[case("\t", Err(lexer::Error::InvalidWhitespace("\t".to_string())))]
 #[case("\"unclosed", Err(lexer::Error::UnterminatedString(0)))]
-#[case("'", Err(lexer::Error::UnknownToken("'".to_string())))]
-#[case("\x01", Err(lexer::Error::UnknownToken("\x01".to_string())))]
+#[case("'", Err(lexer::Error::UnknownItem("'".to_string())))]
+#[case("\x01", Err(lexer::Error::UnknownItem("\x01".to_string())))]
 fn test_lex(#[case] source: &str, #[case] expected: Res<Vec<LexKind>>) {
     assert_eq!(
         lex(source)

@@ -2,14 +2,14 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{Res, TokenType};
+use tokenizer::{LexType, Res};
 
 #[rstest::rstest]
 // No arguments
 #[case(
     "func()",
     Ok(vec![
-        T(TokenType::Identifier("func")),
+        T(LexType::Identifier("func")),
         Open,
         Close,
     ])
@@ -18,9 +18,9 @@ use tokenizer::{Res, TokenType};
 #[case(
     "func(x)",
     Ok(vec![
-        T(TokenType::Identifier("func")),
+        T(LexType::Identifier("func")),
         Open,
-        T(TokenType::Identifier("x")),
+        T(LexType::Identifier("x")),
         Close,
     ])
 )]
@@ -28,13 +28,13 @@ use tokenizer::{Res, TokenType};
 #[case(
     "func(a, b, c)",
     Ok(vec![
-        T(TokenType::Identifier("func")),
+        T(LexType::Identifier("func")),
         Open,
-        T(TokenType::Identifier("a")),
-        T(TokenType::Comma),
-        T(TokenType::Identifier("b")),
-        T(TokenType::Comma),
-        T(TokenType::Identifier("c")),
+        T(LexType::Identifier("a")),
+        T(LexType::Comma),
+        T(LexType::Identifier("b")),
+        T(LexType::Comma),
+        T(LexType::Identifier("c")),
         Close,
     ])
 )]
@@ -42,9 +42,9 @@ use tokenizer::{Res, TokenType};
 #[case(
     "func(42)",
     Ok(vec![
-        T(TokenType::Identifier("func")),
+        T(LexType::Identifier("func")),
         Open,
-        T(TokenType::Number("42")),
+        T(LexType::Number("42")),
         Close,
     ])
 )]
@@ -52,9 +52,9 @@ use tokenizer::{Res, TokenType};
 #[case(
     "func(3.14)",
     Ok(vec![
-        T(TokenType::Identifier("func")),
+        T(LexType::Identifier("func")),
         Open,
-        T(TokenType::Float("3", Some("14"))),
+        T(LexType::Float("3", Some("14"))),
         Close,
     ])
 )]
@@ -62,9 +62,9 @@ use tokenizer::{Res, TokenType};
 #[case(
     "func(\"hello\")",
     Ok(vec![
-        T(TokenType::Identifier("func")),
+        T(LexType::Identifier("func")),
         Open,
-        T(TokenType::String("hello", tokenizer::StringType::Normal)),
+        T(LexType::String("hello", tokenizer::StringType::Normal)),
         Close,
     ])
 )]
@@ -72,9 +72,9 @@ use tokenizer::{Res, TokenType};
 #[case(
     "func(true)",
     Ok(vec![
-        T(TokenType::Identifier("func")),
+        T(LexType::Identifier("func")),
         Open,
-        T(TokenType::True),
+        T(LexType::True),
         Close,
     ])
 )]
@@ -82,9 +82,9 @@ use tokenizer::{Res, TokenType};
 #[case(
     "x := func()",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::StaticAssignment),
-        T(TokenType::Identifier("func")),
+        T(LexType::Identifier("x")),
+        T(LexType::StaticAssignment),
+        T(LexType::Identifier("func")),
         Open,
         Close,
     ])
@@ -93,10 +93,10 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n    func()",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Identifier("func")),
+        T(LexType::Identifier("func")),
         Open,
         Close,
         Close,
@@ -106,15 +106,15 @@ use tokenizer::{Res, TokenType};
 #[case(
     "fn f\n    foo()\n    bar(x)",
     Ok(vec![
-        T(TokenType::Function),
-        T(TokenType::Identifier("f")),
+        T(LexType::Function),
+        T(LexType::Identifier("f")),
         Open,
-        T(TokenType::Identifier("foo")),
+        T(LexType::Identifier("foo")),
         Open,
         Close,
-        T(TokenType::Identifier("bar")),
+        T(LexType::Identifier("bar")),
         Open,
-        T(TokenType::Identifier("x")),
+        T(LexType::Identifier("x")),
         Close,
         Close,
     ])
@@ -123,9 +123,9 @@ use tokenizer::{Res, TokenType};
 #[case(
     "outer(inner())",
     Ok(vec![
-        T(TokenType::Identifier("outer")),
+        T(LexType::Identifier("outer")),
         Open,
-        T(TokenType::Identifier("inner")),
+        T(LexType::Identifier("inner")),
         Open,
         Close,
         Close,
@@ -135,9 +135,9 @@ use tokenizer::{Res, TokenType};
 #[case(
     "x = rand()",
     Ok(vec![
-        T(TokenType::Identifier("x")),
-        T(TokenType::Assignment),
-        T(TokenType::Identifier("rand")),
+        T(LexType::Identifier("x")),
+        T(LexType::Assignment),
+        T(LexType::Identifier("rand")),
         Open,
         Close,
     ])
