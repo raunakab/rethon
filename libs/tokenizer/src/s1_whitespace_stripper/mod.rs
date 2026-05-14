@@ -9,7 +9,7 @@ use crate::{Error, Position, Res};
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
 
-pub(crate) fn strip<'a>(
+pub(crate) fn whitespace_strip<'a>(
     iter: impl Iterator<Item = lexer::Res<LexItem<'a>>>,
 ) -> impl Iterator<Item = Res<StrippedToken<'a>>> {
     WhitespaceStripper {

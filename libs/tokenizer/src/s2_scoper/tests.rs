@@ -1,6 +1,6 @@
 use lexer::lex;
 
-use crate::{Brace, Error, Res, ScopeItem, Token, s1_whitespace_stripper::strip};
+use crate::{Brace, Error, Res, ScopeItem, Token, s1_whitespace_stripper::whitespace_strip};
 
 use super::scope;
 
@@ -251,7 +251,7 @@ fn simplify_node(node: ScopeItem<'_>) -> SimpleNode<'_> {
 )]
 fn test_s2_scope(#[case] source: &str, #[case] expected: Res<Vec<SimpleNode<'static>>>) {
     assert_eq!(
-        scope(strip(lex(source)))
+        scope(whitespace_strip(lex(source)))
             .map(|res| res.map(simplify_node))
             .collect::<Res<Vec<_>>>(),
         expected

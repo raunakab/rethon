@@ -21,14 +21,14 @@ use thiserror::Error;
 pub use lexer::{Brace, BraceDirection, StringType, Token};
 
 use crate::{
-    s1_whitespace_stripper::{INDENTATION_SIZE, strip},
+    s1_whitespace_stripper::{INDENTATION_SIZE, whitespace_strip},
     s2_scoper::scope as scope_inner,
 };
 
 pub type Res<T = ()> = Result<T, Error>;
 
 pub fn scope(source: &str) -> tokens!() {
-    scope_inner(strip(lexer::lex(source))).peekable()
+    scope_inner(whitespace_strip(lexer::lex(source))).peekable()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -2,7 +2,7 @@ use lexer::{Brace, BraceDirection, Token, lex};
 
 use crate::{
     Error, Res,
-    s1_whitespace_stripper::{StrippedToken, StrippedTokenKind, strip},
+    s1_whitespace_stripper::{StrippedToken, StrippedTokenKind, whitespace_strip},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -130,7 +130,7 @@ fn b(
 ]))]
 fn test_s1_strip(#[case] source: &str, #[case] expected: Res<Vec<SimpleToken<'static>>>) {
     assert_eq!(
-        strip(lex(source))
+        whitespace_strip(lex(source))
             .map(|token| {
                 let token = token?;
                 Ok(SimpleToken::from(token))
