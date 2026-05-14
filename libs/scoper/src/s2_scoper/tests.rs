@@ -1,6 +1,6 @@
 use lexer::lex;
 
-use crate::{Brace, Error, Res, ScopeItem, Token, s1_whitespace_stripper::whitespace_strip};
+use crate::{Brace, Error, Res, Token, TokenTree, s1_whitespace_stripper::whitespace_strip};
 
 use super::scope;
 
@@ -12,13 +12,13 @@ enum SimpleNode<'a> {
     ScopeEnd,
 }
 
-fn simplify_node(node: ScopeItem<'_>) -> SimpleNode<'_> {
+fn simplify_node(node: TokenTree<'_>) -> SimpleNode<'_> {
     match node {
-        ScopeItem::Token(token_type, position) => {
+        TokenTree::Token(token_type, position) => {
             SimpleNode::Token(token_type, position.indentation_level)
         }
-        ScopeItem::Start(brace_opt) => SimpleNode::ScopeStart(brace_opt.map(|(brace, _)| brace)),
-        ScopeItem::End(_) => SimpleNode::ScopeEnd,
+        TokenTree::Start(brace_opt) => SimpleNode::ScopeStart(brace_opt.map(|(brace, _)| brace)),
+        TokenTree::End(_) => SimpleNode::ScopeEnd,
     }
 }
 

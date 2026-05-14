@@ -6,13 +6,13 @@ use std::iter::Peekable;
 use lexer::BraceDirection;
 
 use crate::{
-    Res, ScopeItem,
+    Res, TokenTree,
     s1_whitespace_stripper::{StrippedToken, StrippedTokenKind},
 };
 
 pub(crate) fn scope<'a>(
     iter: impl Iterator<Item = Res<StrippedToken<'a>>>,
-) -> impl Iterator<Item = Res<ScopeItem<'a>>> {
+) -> impl Iterator<Item = Res<TokenTree<'a>>> {
     Scoper {
         iter: iter.peekable(),
         indent_stack: vec![0],
@@ -35,7 +35,7 @@ impl<'a, I> Iterator for Scoper<'a, I>
 where
     I: Iterator<Item = Res<StrippedToken<'a>>>,
 {
-    type Item = Res<ScopeItem<'a>>;
+    type Item = Res<TokenTree<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         macro_rules! build_scope_end {
@@ -54,7 +54,7 @@ where
             () => {
                 if self.pending_scope_ends > 0 {
                     self.pending_scope_ends -= 1;
-                    return Some(Ok(ScopeItem::End(None)));
+                    return Some(Ok(TokenTree::End(None)));
                 }
             };
         }
@@ -63,7 +63,7 @@ where
             () => {
                 if self.pending_scope_starts > 0 {
                     self.pending_scope_starts -= 1;
-                    return Some(Ok(ScopeItem::Start(None)));
+                    return Some(Ok(TokenTree::Start(None)));
                 }
             };
         }
@@ -114,12 +114,12 @@ where
 
         let stripped = self.iter.next().unwrap().unwrap();
         Some(Ok(match stripped.kind {
-            StrippedTokenKind::Normal(tt) => ScopeItem::Token(tt, stripped.position),
+            StrippedTokenKind::Normal(tt) => TokenTree::Token(tt, stripped.position),
             StrippedTokenKind::Brace(brace, BraceDirection::Open) => {
-                ScopeItem::Start(Some((brace, stripped.position)))
+                TokenTree::Start(Some((brace, stripped.position)))
             }
             StrippedTokenKind::Brace(brace, BraceDirection::Close) => {
-                ScopeItem::End(Some((brace, stripped.position)))
+                TokenTree::End(Some((brace, stripped.position)))
             }
         }))
     }

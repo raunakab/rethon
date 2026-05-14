@@ -4,10 +4,10 @@ macro_rules! tokens {
         $l:lifetime
         $(,)?
     ) => {
-        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::ScopeItem<$l>>>>
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::TokenTree<$l>>>>
     };
     () => {
-        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::ScopeItem<'_>>>>
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::TokenTree<'_>>>>
     };
 }
 
@@ -32,7 +32,7 @@ pub fn scope(source: &str) -> tokens!() {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ScopeItem<'a> {
+pub enum TokenTree<'a> {
     Token(Token<'a>, Position),
     Start(Option<(Brace, Position)>),
     End(Option<(Brace, Position)>),

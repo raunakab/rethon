@@ -51,7 +51,7 @@ macro_rules! token {
         , $b:pat
         $(,)?
     ) => {
-        scoper::ScopeItem::Token(
+        scoper::TokenTree::Token(
             $a,
             scoper::Position {
                 indentation_level: $b,

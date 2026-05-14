@@ -1,4 +1,4 @@
-use scoper::{ScopeItem, scope};
+use scoper::{TokenTree, scope};
 
 static SOURCE: &str = "
 num = rand()
@@ -27,15 +27,15 @@ fn main() {
     for result in scope(SOURCE) {
         let result = result.unwrap();
         match result {
-            ScopeItem::Start(_) => {
+            TokenTree::Start(_) => {
                 println!("{}{{", "    ".repeat(depth));
                 depth = depth.saturating_add(1);
             }
-            ScopeItem::End(_) => {
+            TokenTree::End(_) => {
                 depth = depth.saturating_sub(1);
                 println!("{}}}", "    ".repeat(depth));
             }
-            ScopeItem::Token(ty, _) => {
+            TokenTree::Token(ty, _) => {
                 println!("{}{ty}", "    ".repeat(depth));
             }
         }
