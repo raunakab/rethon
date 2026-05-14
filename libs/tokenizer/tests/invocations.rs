@@ -2,14 +2,14 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use scoper::{LexType, Res};
+use scoper::{Res, Token};
 
 #[rstest::rstest]
 // No arguments
 #[case(
     "func()",
     Ok(vec![
-        T(LexType::Identifier("func")),
+        T(Token::Identifier("func")),
         Open,
         Close,
     ])
@@ -18,9 +18,9 @@ use scoper::{LexType, Res};
 #[case(
     "func(x)",
     Ok(vec![
-        T(LexType::Identifier("func")),
+        T(Token::Identifier("func")),
         Open,
-        T(LexType::Identifier("x")),
+        T(Token::Identifier("x")),
         Close,
     ])
 )]
@@ -28,13 +28,13 @@ use scoper::{LexType, Res};
 #[case(
     "func(a, b, c)",
     Ok(vec![
-        T(LexType::Identifier("func")),
+        T(Token::Identifier("func")),
         Open,
-        T(LexType::Identifier("a")),
-        T(LexType::Comma),
-        T(LexType::Identifier("b")),
-        T(LexType::Comma),
-        T(LexType::Identifier("c")),
+        T(Token::Identifier("a")),
+        T(Token::Comma),
+        T(Token::Identifier("b")),
+        T(Token::Comma),
+        T(Token::Identifier("c")),
         Close,
     ])
 )]
@@ -42,9 +42,9 @@ use scoper::{LexType, Res};
 #[case(
     "func(42)",
     Ok(vec![
-        T(LexType::Identifier("func")),
+        T(Token::Identifier("func")),
         Open,
-        T(LexType::Number("42")),
+        T(Token::Number("42")),
         Close,
     ])
 )]
@@ -52,9 +52,9 @@ use scoper::{LexType, Res};
 #[case(
     "func(3.14)",
     Ok(vec![
-        T(LexType::Identifier("func")),
+        T(Token::Identifier("func")),
         Open,
-        T(LexType::Float("3", Some("14"))),
+        T(Token::Float("3", Some("14"))),
         Close,
     ])
 )]
@@ -62,9 +62,9 @@ use scoper::{LexType, Res};
 #[case(
     "func(\"hello\")",
     Ok(vec![
-        T(LexType::Identifier("func")),
+        T(Token::Identifier("func")),
         Open,
-        T(LexType::String("hello", scoper::StringType::Normal)),
+        T(Token::String("hello", scoper::StringType::Normal)),
         Close,
     ])
 )]
@@ -72,9 +72,9 @@ use scoper::{LexType, Res};
 #[case(
     "func(true)",
     Ok(vec![
-        T(LexType::Identifier("func")),
+        T(Token::Identifier("func")),
         Open,
-        T(LexType::True),
+        T(Token::True),
         Close,
     ])
 )]
@@ -82,9 +82,9 @@ use scoper::{LexType, Res};
 #[case(
     "x := func()",
     Ok(vec![
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Identifier("func")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Identifier("func")),
         Open,
         Close,
     ])
@@ -93,10 +93,10 @@ use scoper::{LexType, Res};
 #[case(
     "fn f\n    func()",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("f")),
+        T(Token::Function),
+        T(Token::Identifier("f")),
         Open,
-        T(LexType::Identifier("func")),
+        T(Token::Identifier("func")),
         Open,
         Close,
         Close,
@@ -106,15 +106,15 @@ use scoper::{LexType, Res};
 #[case(
     "fn f\n    foo()\n    bar(x)",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("f")),
+        T(Token::Function),
+        T(Token::Identifier("f")),
         Open,
-        T(LexType::Identifier("foo")),
+        T(Token::Identifier("foo")),
         Open,
         Close,
-        T(LexType::Identifier("bar")),
+        T(Token::Identifier("bar")),
         Open,
-        T(LexType::Identifier("x")),
+        T(Token::Identifier("x")),
         Close,
         Close,
     ])
@@ -123,9 +123,9 @@ use scoper::{LexType, Res};
 #[case(
     "outer(inner())",
     Ok(vec![
-        T(LexType::Identifier("outer")),
+        T(Token::Identifier("outer")),
         Open,
-        T(LexType::Identifier("inner")),
+        T(Token::Identifier("inner")),
         Open,
         Close,
         Close,
@@ -135,9 +135,9 @@ use scoper::{LexType, Res};
 #[case(
     "x = rand()",
     Ok(vec![
-        T(LexType::Identifier("x")),
-        T(LexType::Assignment),
-        T(LexType::Identifier("rand")),
+        T(Token::Identifier("x")),
+        T(Token::Assignment),
+        T(Token::Identifier("rand")),
         Open,
         Close,
     ])

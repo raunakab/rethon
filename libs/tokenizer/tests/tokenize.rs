@@ -2,7 +2,7 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use scoper::{LexType, Res, StringType};
+use scoper::{Res, StringType, Token};
 
 #[rstest::rstest]
 // Empty source
@@ -11,20 +11,20 @@ use scoper::{LexType, Res, StringType};
 #[case(
     "x := 42",
     Ok(vec![
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Number("42")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Number("42")),
     ])
 )]
 // Function with body
 #[case(
     "fn add\n    return x",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("add")),
+        T(Token::Function),
+        T(Token::Identifier("add")),
         Open,
-        T(LexType::Return),
-        T(LexType::Identifier("x")),
+        T(Token::Return),
+        T(Token::Identifier("x")),
         Close,
     ])
 )]
@@ -32,20 +32,20 @@ use scoper::{LexType, Res, StringType};
 #[case(
     "x := \"hello\"",
     Ok(vec![
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::String("hello", StringType::Normal)),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::String("hello", StringType::Normal)),
     ])
 )]
 // CRLF treated identically to LF
 #[case(
     "fn f\r\n    return x",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("f")),
+        T(Token::Function),
+        T(Token::Identifier("f")),
         Open,
-        T(LexType::Return),
-        T(LexType::Identifier("x")),
+        T(Token::Return),
+        T(Token::Identifier("x")),
         Close,
     ])
 )]

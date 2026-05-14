@@ -18,7 +18,7 @@ use std::ops::Range;
 
 use thiserror::Error;
 
-pub use lexer::{Brace, BraceDirection, LexType, StringType};
+pub use lexer::{Brace, BraceDirection, StringType, Token};
 
 use crate::{
     s1_whitespace_stripper::{INDENTATION_SIZE, strip},
@@ -33,7 +33,7 @@ pub fn scope(source: &str) -> tokens!() {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScopeItem<'a> {
-    Token(LexType<'a>, Position),
+    Token(Token<'a>, Position),
     ScopeStart(Option<(Brace, Position)>),
     ScopeEnd(Option<(Brace, Position)>),
 }

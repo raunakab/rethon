@@ -2,32 +2,32 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use scoper::{LexType, Res};
+use scoper::{Res, Token};
 
 #[rstest::rstest]
 // Bare for with no body
 #[case(
     "for items",
     Ok(vec![
-        T(LexType::For),
-        T(LexType::Identifier("items")),
+        T(Token::For),
+        T(Token::Identifier("items")),
     ])
 )]
 // Bare loop with no body
 #[case(
     "loop",
-    Ok(vec![T(LexType::Loop)])
+    Ok(vec![T(Token::Loop)])
 )]
 // For loop with single-statement body
 #[case(
     "for items\n    x := item",
     Ok(vec![
-        T(LexType::For),
-        T(LexType::Identifier("items")),
+        T(Token::For),
+        T(Token::Identifier("items")),
         Open,
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Identifier("item")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Identifier("item")),
         Close,
     ])
 )]
@@ -35,11 +35,11 @@ use scoper::{LexType, Res};
 #[case(
     "loop\n    x := 1",
     Ok(vec![
-        T(LexType::Loop),
+        T(Token::Loop),
         Open,
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Number("1")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Number("1")),
         Close,
     ])
 )]
@@ -47,15 +47,15 @@ use scoper::{LexType, Res};
 #[case(
     "for items\n    x := item\n    y := x",
     Ok(vec![
-        T(LexType::For),
-        T(LexType::Identifier("items")),
+        T(Token::For),
+        T(Token::Identifier("items")),
         Open,
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Identifier("item")),
-        T(LexType::Identifier("y")),
-        T(LexType::StaticAssignment),
-        T(LexType::Identifier("x")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Identifier("item")),
+        T(Token::Identifier("y")),
+        T(Token::StaticAssignment),
+        T(Token::Identifier("x")),
         Close,
     ])
 )]
@@ -63,15 +63,15 @@ use scoper::{LexType, Res};
 #[case(
     "for xs\n    for ys\n        x := y",
     Ok(vec![
-        T(LexType::For),
-        T(LexType::Identifier("xs")),
+        T(Token::For),
+        T(Token::Identifier("xs")),
         Open,
-        T(LexType::For),
-        T(LexType::Identifier("ys")),
+        T(Token::For),
+        T(Token::Identifier("ys")),
         Open,
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Identifier("y")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Identifier("y")),
         Close,
         Close,
     ])
@@ -80,13 +80,13 @@ use scoper::{LexType, Res};
 #[case(
     "loop\n    if done\n        return result",
     Ok(vec![
-        T(LexType::Loop),
+        T(Token::Loop),
         Open,
-        T(LexType::If),
-        T(LexType::Identifier("done")),
+        T(Token::If),
+        T(Token::Identifier("done")),
         Open,
-        T(LexType::Return),
-        T(LexType::Identifier("result")),
+        T(Token::Return),
+        T(Token::Identifier("result")),
         Close,
         Close,
     ])
@@ -95,18 +95,18 @@ use scoper::{LexType, Res};
 #[case(
     "fn f\n    for xs\n        x := item\n    return done",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("f")),
+        T(Token::Function),
+        T(Token::Identifier("f")),
         Open,
-        T(LexType::For),
-        T(LexType::Identifier("xs")),
+        T(Token::For),
+        T(Token::Identifier("xs")),
         Open,
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Identifier("item")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Identifier("item")),
         Close,
-        T(LexType::Return),
-        T(LexType::Identifier("done")),
+        T(Token::Return),
+        T(Token::Identifier("done")),
         Close,
     ])
 )]

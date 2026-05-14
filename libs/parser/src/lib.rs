@@ -61,7 +61,7 @@ macro_rules! token {
     };
 }
 
-use scoper::{LexType, scope, tokens};
+use scoper::{Token, scope, tokens};
 use thiserror::Error;
 
 type Res<T = ()> = Result<T, Error>;
@@ -85,7 +85,7 @@ pub fn parser<'a>(source: &'a str) -> Res<Scope<'a>> {
 }
 
 fn parse_scope<'a>(tokens: &mut tokens!('a), indent_level: usize) -> Res<Scope<'a>> {
-    step!((LexType::Scope, _) = tokens);
+    step!((Token::Scope, _) = tokens);
     let items = parse_items(tokens, indent_level.checked_add(1).unwrap())?;
     Ok(items)
 }
@@ -112,24 +112,24 @@ fn parse_definition<'a>(tokens: &mut tokens!('a)) -> Res<Definition<'a>> {
 }
 
 fn parse_pattern<'a>(tokens: &mut tokens!('a)) -> Res<Pattern<'a>> {
-    step!((LexType::Identifier(identifier), _) = tokens);
+    step!((Token::Identifier(identifier), _) = tokens);
     Ok(Pattern::CatchAll(identifier))
 }
 
 fn parse_optional_type<'a>(tokens: &mut tokens!('a)) -> Res<Option<Expression<'a>>> {
-    stepif!((LexType::Semicolon, _) = tokens);
+    stepif!((Token::Semicolon, _) = tokens);
     let r#type = parse_expression(tokens)?;
     Ok(Some(r#type))
 }
 
 fn parse_expression<'a>(tokens: &mut tokens!('a)) -> Res<Expression<'a>> {
     Ok(match peek!(tokens) {
-        token!(LexType::Semicolon, _) => Expression::Noop,
-        token!(LexType::Comma, _) => {
-            return Err(Error::InvalidChar(LexType::Comma.to_string()));
+        token!(Token::Semicolon, _) => Expression::Noop,
+        token!(Token::Comma, _) => {
+            return Err(Error::InvalidChar(Token::Comma.to_string()));
         }
 
-        token!(LexType::MacroIdentifier(_), _) => Expression::Macro(Box::new(parse_macro(tokens)?)),
+        token!(Token::MacroIdentifier(_), _) => Expression::Macro(Box::new(parse_macro(tokens)?)),
         _ => todo!(),
     })
 }
@@ -139,7 +139,7 @@ fn parse_macro<'a>(tokens: &mut tokens!('a)) -> Res<Macro> {
 }
 
 fn parse_pattern_match_fail<'a>(tokens: &mut tokens!('a)) -> Res<PatternMatchFail<'a>> {
-    stepif!((LexType::Otherwise, original_indent_level) = tokens);
+    stepif!((Token::Otherwise, original_indent_level) = tokens);
     let scope = parse_items(tokens, original_indent_level.checked_add(1).unwrap())?;
     Ok(Some(scope))
 }

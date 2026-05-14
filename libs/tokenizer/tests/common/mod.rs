@@ -1,8 +1,8 @@
-use scoper::{LexType, Res, ScopeItem, scope};
+use scoper::{Res, ScopeItem, Token, scope};
 
 #[derive(Debug, PartialEq)]
 pub enum S<'a> {
-    T(LexType<'a>),
+    T(Token<'a>),
     Open,
     Close,
 }

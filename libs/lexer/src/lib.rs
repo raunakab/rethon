@@ -20,14 +20,14 @@ pub struct LexItem<'a> {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LexKind<'a> {
-    Normal(LexType<'a>),
+    Normal(Token<'a>),
     Whitespace(usize),
     Newline,
     Brace(Brace, BraceDirection),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
-pub enum LexType<'a> {
+pub enum Token<'a> {
     // Control
     #[display(";")]
     Semicolon,

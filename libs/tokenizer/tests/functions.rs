@@ -2,26 +2,26 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use scoper::{LexType, Res};
+use scoper::{Res, Token};
 
 #[rstest::rstest]
 // Function header with no body
 #[case(
     "fn name",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("name")),
+        T(Token::Function),
+        T(Token::Identifier("name")),
     ])
 )]
 // Function with a single return
 #[case(
     "fn greet\n    return x",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("greet")),
+        T(Token::Function),
+        T(Token::Identifier("greet")),
         Open,
-        T(LexType::Return),
-        T(LexType::Identifier("x")),
+        T(Token::Return),
+        T(Token::Identifier("x")),
         Close,
     ])
 )]
@@ -29,17 +29,17 @@ use scoper::{LexType, Res};
 #[case(
     "fn add\n    x := 1\n    y := 2\n    return x",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("add")),
+        T(Token::Function),
+        T(Token::Identifier("add")),
         Open,
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Number("1")),
-        T(LexType::Identifier("y")),
-        T(LexType::StaticAssignment),
-        T(LexType::Number("2")),
-        T(LexType::Return),
-        T(LexType::Identifier("x")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Number("1")),
+        T(Token::Identifier("y")),
+        T(Token::StaticAssignment),
+        T(Token::Number("2")),
+        T(Token::Return),
+        T(Token::Identifier("x")),
         Close,
     ])
 )]
@@ -47,17 +47,17 @@ use scoper::{LexType, Res};
 #[case(
     "fn a\n    return 1\nfn b\n    return 2",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("a")),
+        T(Token::Function),
+        T(Token::Identifier("a")),
         Open,
-        T(LexType::Return),
-        T(LexType::Number("1")),
+        T(Token::Return),
+        T(Token::Number("1")),
         Close,
-        T(LexType::Function),
-        T(LexType::Identifier("b")),
+        T(Token::Function),
+        T(Token::Identifier("b")),
         Open,
-        T(LexType::Return),
-        T(LexType::Number("2")),
+        T(Token::Return),
+        T(Token::Number("2")),
         Close,
     ])
 )]
@@ -65,11 +65,11 @@ use scoper::{LexType, Res};
 #[case(
     "fn f\n\n    return x",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("f")),
+        T(Token::Function),
+        T(Token::Identifier("f")),
         Open,
-        T(LexType::Return),
-        T(LexType::Identifier("x")),
+        T(Token::Return),
+        T(Token::Identifier("x")),
         Close,
     ])
 )]
@@ -77,11 +77,11 @@ use scoper::{LexType, Res};
 #[case(
     "fn f\n\n\n    return x",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("f")),
+        T(Token::Function),
+        T(Token::Identifier("f")),
         Open,
-        T(LexType::Return),
-        T(LexType::Identifier("x")),
+        T(Token::Return),
+        T(Token::Identifier("x")),
         Close,
     ])
 )]
@@ -89,14 +89,14 @@ use scoper::{LexType, Res};
 #[case(
     "fn check\n    if x\n        return true",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("check")),
+        T(Token::Function),
+        T(Token::Identifier("check")),
         Open,
-        T(LexType::If),
-        T(LexType::Identifier("x")),
+        T(Token::If),
+        T(Token::Identifier("x")),
         Open,
-        T(LexType::Return),
-        T(LexType::True),
+        T(Token::Return),
+        T(Token::True),
         Close,
         Close,
     ])
@@ -105,17 +105,17 @@ use scoper::{LexType, Res};
 #[case(
     "fn f\n    if a\n        if b\n            return true",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("f")),
+        T(Token::Function),
+        T(Token::Identifier("f")),
         Open,
-        T(LexType::If),
-        T(LexType::Identifier("a")),
+        T(Token::If),
+        T(Token::Identifier("a")),
         Open,
-        T(LexType::If),
-        T(LexType::Identifier("b")),
+        T(Token::If),
+        T(Token::Identifier("b")),
         Open,
-        T(LexType::Return),
-        T(LexType::True),
+        T(Token::Return),
+        T(Token::True),
         Close,
         Close,
         Close,
@@ -125,18 +125,18 @@ use scoper::{LexType, Res};
 #[case(
     "x := 1\nfn f\n    return x\ny := 2",
     Ok(vec![
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Number("1")),
-        T(LexType::Function),
-        T(LexType::Identifier("f")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Number("1")),
+        T(Token::Function),
+        T(Token::Identifier("f")),
         Open,
-        T(LexType::Return),
-        T(LexType::Identifier("x")),
+        T(Token::Return),
+        T(Token::Identifier("x")),
         Close,
-        T(LexType::Identifier("y")),
-        T(LexType::StaticAssignment),
-        T(LexType::Number("2")),
+        T(Token::Identifier("y")),
+        T(Token::StaticAssignment),
+        T(Token::Number("2")),
     ])
 )]
 fn test_functions(#[case] source: &str, #[case] expected: Res<Vec<S<'static>>>) {

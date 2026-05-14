@@ -2,26 +2,26 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use scoper::{LexType, Res};
+use scoper::{Res, Token};
 
 #[rstest::rstest]
 // Bare if with no body
 #[case(
     "if cond",
     Ok(vec![
-        T(LexType::If),
-        T(LexType::Identifier("cond")),
+        T(Token::If),
+        T(Token::Identifier("cond")),
     ])
 )]
 // Simple if with single-statement body
 #[case(
     "if cond\n    return true",
     Ok(vec![
-        T(LexType::If),
-        T(LexType::Identifier("cond")),
+        T(Token::If),
+        T(Token::Identifier("cond")),
         Open,
-        T(LexType::Return),
-        T(LexType::True),
+        T(Token::Return),
+        T(Token::True),
         Close,
     ])
 )]
@@ -29,14 +29,14 @@ use scoper::{LexType, Res};
 #[case(
     "if cond\n    x := 1\n    return x",
     Ok(vec![
-        T(LexType::If),
-        T(LexType::Identifier("cond")),
+        T(Token::If),
+        T(Token::Identifier("cond")),
         Open,
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Number("1")),
-        T(LexType::Return),
-        T(LexType::Identifier("x")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Number("1")),
+        T(Token::Return),
+        T(Token::Identifier("x")),
         Close,
     ])
 )]
@@ -44,16 +44,16 @@ use scoper::{LexType, Res};
 #[case(
     "if cond\n    return true\nelse\n    return false",
     Ok(vec![
-        T(LexType::If),
-        T(LexType::Identifier("cond")),
+        T(Token::If),
+        T(Token::Identifier("cond")),
         Open,
-        T(LexType::Return),
-        T(LexType::True),
+        T(Token::Return),
+        T(Token::True),
         Close,
-        T(LexType::Else),
+        T(Token::Else),
         Open,
-        T(LexType::Return),
-        T(LexType::False),
+        T(Token::Return),
+        T(Token::False),
         Close,
     ])
 )]
@@ -61,22 +61,22 @@ use scoper::{LexType, Res};
 #[case(
     "if cond\n    x := 1\n    return x\nelse\n    y := 2\n    return y",
     Ok(vec![
-        T(LexType::If),
-        T(LexType::Identifier("cond")),
+        T(Token::If),
+        T(Token::Identifier("cond")),
         Open,
-        T(LexType::Identifier("x")),
-        T(LexType::StaticAssignment),
-        T(LexType::Number("1")),
-        T(LexType::Return),
-        T(LexType::Identifier("x")),
+        T(Token::Identifier("x")),
+        T(Token::StaticAssignment),
+        T(Token::Number("1")),
+        T(Token::Return),
+        T(Token::Identifier("x")),
         Close,
-        T(LexType::Else),
+        T(Token::Else),
         Open,
-        T(LexType::Identifier("y")),
-        T(LexType::StaticAssignment),
-        T(LexType::Number("2")),
-        T(LexType::Return),
-        T(LexType::Identifier("y")),
+        T(Token::Identifier("y")),
+        T(Token::StaticAssignment),
+        T(Token::Number("2")),
+        T(Token::Return),
+        T(Token::Identifier("y")),
         Close,
     ])
 )]
@@ -84,14 +84,14 @@ use scoper::{LexType, Res};
 #[case(
     "if a\n    if b\n        return true",
     Ok(vec![
-        T(LexType::If),
-        T(LexType::Identifier("a")),
+        T(Token::If),
+        T(Token::Identifier("a")),
         Open,
-        T(LexType::If),
-        T(LexType::Identifier("b")),
+        T(Token::If),
+        T(Token::Identifier("b")),
         Open,
-        T(LexType::Return),
-        T(LexType::True),
+        T(Token::Return),
+        T(Token::True),
         Close,
         Close,
     ])
@@ -100,24 +100,24 @@ use scoper::{LexType, Res};
 #[case(
     "if a\n    return 1\nelse\n    if b\n        return 2\n    else\n        return 3",
     Ok(vec![
-        T(LexType::If),
-        T(LexType::Identifier("a")),
+        T(Token::If),
+        T(Token::Identifier("a")),
         Open,
-        T(LexType::Return),
-        T(LexType::Number("1")),
+        T(Token::Return),
+        T(Token::Number("1")),
         Close,
-        T(LexType::Else),
+        T(Token::Else),
         Open,
-        T(LexType::If),
-        T(LexType::Identifier("b")),
+        T(Token::If),
+        T(Token::Identifier("b")),
         Open,
-        T(LexType::Return),
-        T(LexType::Number("2")),
+        T(Token::Return),
+        T(Token::Number("2")),
         Close,
-        T(LexType::Else),
+        T(Token::Else),
         Open,
-        T(LexType::Return),
-        T(LexType::Number("3")),
+        T(Token::Return),
+        T(Token::Number("3")),
         Close,
         Close,
     ])
@@ -126,17 +126,17 @@ use scoper::{LexType, Res};
 #[case(
     "fn f\n    if x\n        return true\n    return false",
     Ok(vec![
-        T(LexType::Function),
-        T(LexType::Identifier("f")),
+        T(Token::Function),
+        T(Token::Identifier("f")),
         Open,
-        T(LexType::If),
-        T(LexType::Identifier("x")),
+        T(Token::If),
+        T(Token::Identifier("x")),
         Open,
-        T(LexType::Return),
-        T(LexType::True),
+        T(Token::Return),
+        T(Token::True),
         Close,
-        T(LexType::Return),
-        T(LexType::False),
+        T(Token::Return),
+        T(Token::False),
         Close,
     ])
 )]
@@ -144,13 +144,13 @@ use scoper::{LexType, Res};
 #[case(
     "if x and y\n    return true",
     Ok(vec![
-        T(LexType::If),
-        T(LexType::Identifier("x")),
-        T(LexType::And),
-        T(LexType::Identifier("y")),
+        T(Token::If),
+        T(Token::Identifier("x")),
+        T(Token::And),
+        T(Token::Identifier("y")),
         Open,
-        T(LexType::Return),
-        T(LexType::True),
+        T(Token::Return),
+        T(Token::True),
         Close,
     ])
 )]

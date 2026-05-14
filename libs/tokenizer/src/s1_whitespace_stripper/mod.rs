@@ -3,7 +3,7 @@ mod tests;
 
 use std::iter::Peekable;
 
-use lexer::{Brace, BraceDirection, LexItem, LexKind, LexType};
+use lexer::{Brace, BraceDirection, LexItem, LexKind, Token};
 
 use crate::{Error, Position, Res};
 
@@ -35,7 +35,7 @@ where
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum StrippedTokenKind<'a> {
-    Normal(LexType<'a>),
+    Normal(Token<'a>),
     Brace(Brace, BraceDirection),
 }
 
