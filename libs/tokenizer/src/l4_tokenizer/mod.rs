@@ -5,7 +5,12 @@ mod tests;
 
 use std::iter::Peekable;
 
-use crate::{Res, Token, l3_tokenizer::L3Token};
+use lexer::BraceDirection;
+
+use crate::{
+    Res, Token,
+    l3_tokenizer::{L3Token, L3TokenType},
+};
 
 pub(crate) fn l4_tokenize<'a>(
     iter: impl Iterator<Item = Res<L3Token<'a>>>,
@@ -110,6 +115,14 @@ where
         }
 
         let l3_token = self.iter.next().unwrap().unwrap();
-        Some(Ok(Token::Token(l3_token.token_type, l3_token.position)))
+        Some(Ok(match l3_token.token_type {
+            L3TokenType::Normal(tt) => Token::Token(tt, l3_token.position),
+            L3TokenType::Brace(brace, BraceDirection::Open) => {
+                Token::ScopeStart(Some((brace, l3_token.position)))
+            }
+            L3TokenType::Brace(brace, BraceDirection::Close) => {
+                Token::ScopeEnd(Some((brace, l3_token.position)))
+            }
+        }))
     }
 }

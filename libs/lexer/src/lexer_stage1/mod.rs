@@ -1,5 +1,3 @@
-#![doc = include_str!("README.md")]
-
 #[cfg(test)]
 mod tests;
 
@@ -25,7 +23,7 @@ struct L1Tokenizer<'a> {
 
 impl<'a> L1Tokenizer<'a> {
     fn parse_string(&mut self, opening_start: usize) -> Res<L1Token<'a>> {
-        let opening_end = opening_start + 1; // The quote is always 1 byte
+        let opening_end = opening_start + 1;
 
         Ok(loop {
             match self.iter.next() {
@@ -34,7 +32,6 @@ impl<'a> L1Tokenizer<'a> {
                         continue;
                     }
 
-                    // Found closing quote - clear iter_state for next token
                     self.iter_state = None;
                     let range = opening_end..index;
                     break L1Token {
@@ -68,14 +65,12 @@ impl<'a> Iterator for L1Tokenizer<'a> {
                 }
             };
 
-            // Check if we're starting or closing a string
             if curr_grapheme == "\"" {
                 match self.iter_state {
                     None => {
                         break Some(self.parse_string(curr_index));
                     }
                     Some((prev_index, L1TokenType::String)) => {
-                        // curr_index is the closing quote; string content is between quotes
                         self.iter_state = None;
                         let range = (prev_index + 1)..curr_index;
                         break Some(Ok(L1Token {
@@ -85,7 +80,6 @@ impl<'a> Iterator for L1Tokenizer<'a> {
                         }));
                     }
                     Some((prev_index, prev_type)) => {
-                        // Defer string start; emit the preceding token first
                         self.iter_state = Some((curr_index, L1TokenType::String));
                         let range = prev_index..curr_index;
                         break Some(Ok(L1Token {
@@ -97,7 +91,6 @@ impl<'a> Iterator for L1Tokenizer<'a> {
                 }
             }
 
-            // If we had a pending String marker (from deferred string parsing), parse it now
             if let Some((quote_index, L1TokenType::String)) = self.iter_state {
                 self.iter_state = None;
                 break Some(self.parse_string(quote_index));
@@ -151,7 +144,6 @@ impl<'a> From<&'a str> for L1TokenType {
             return Self::Keyword;
         }
 
-        // If this line is reached, `source` must be a `char`.
         let character = source.chars().next().unwrap();
 
         if character.is_ascii_whitespace() {

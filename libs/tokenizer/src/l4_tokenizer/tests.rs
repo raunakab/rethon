@@ -1,10 +1,7 @@
+use lexer::lex;
+
 use crate::{
-    Error, Res,
-    l1_tokenizer::l1_tokenize,
-    l2_tokenizer::l2_tokenize,
-    l3_tokenizer::l3_tokenize,
-    l4_tokenizer::l4_tokenize,
-    {Brace, Token, TokenType},
+    Brace, Error, Res, Token, TokenType, l3_tokenizer::l3_tokenize, l4_tokenizer::l4_tokenize,
 };
 
 // Simplified node type for easier testing (strips ranges and source positions)
@@ -254,7 +251,7 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
 )]
 fn test_l4_tokenization(#[case] source: &str, #[case] expected: Res<Vec<SimpleNode<'static>>>) {
     assert_eq!(
-        l4_tokenize(l3_tokenize(l2_tokenize(l1_tokenize(source))))
+        l4_tokenize(l3_tokenize(lex(source)))
             .map(|res| res.map(simplify_node))
             .collect::<Res<Vec<_>>>(),
         expected

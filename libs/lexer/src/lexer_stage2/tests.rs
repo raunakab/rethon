@@ -1,8 +1,7 @@
 use crate::{
-    Error, Res,
-    l1_tokenizer::l1_tokenize,
-    l2_tokenizer::{L2TokenType, l2_tokenize},
-    {Brace, BraceDirection, StringType, TokenType},
+    Brace, BraceDirection, Error, Res, StringType, TokenType,
+    lexer_stage1::l1_tokenize,
+    lexer_stage2::{L2TokenType, l2_tokenize},
 };
 
 #[rstest::rstest]
@@ -47,10 +46,7 @@ use crate::{
 #[case("{", Ok(vec![L2TokenType::Brace(Brace::Curly, BraceDirection::Open)]))]
 #[case("}", Ok(vec![L2TokenType::Brace(Brace::Curly, BraceDirection::Close)]))]
 #[case("\n", Ok(vec![L2TokenType::Newline]))]
-#[case(
-    "\t",
-    Err(Error::InvalidWhitespace("\t".to_string()))
-)]
+#[case("\t", Err(Error::InvalidWhitespace("\t".to_string())))]
 #[case("a\nb", Ok(vec![
     L2TokenType::Normal(TokenType::Identifier("a")),
     L2TokenType::Newline,
@@ -61,10 +57,7 @@ use crate::{
     L2TokenType::Newline,
     L2TokenType::Normal(TokenType::Identifier("b")),
 ]))]
-#[case(
-    "a\tb",
-    Err(Error::InvalidWhitespace("\t".to_string()))
-)]
+#[case("a\tb", Err(Error::InvalidWhitespace("\t".to_string())))]
 #[case("fn add(x, y) { return x + y; }", Ok(vec![
     L2TokenType::Normal(TokenType::Function),
     L2TokenType::Whitespace(1),
@@ -165,23 +158,18 @@ use crate::{
     L2TokenType::Whitespace(3),
     L2TokenType::Normal(TokenType::Identifier("y")),
 ]))]
-// Standalone \r is not \n or \r\n → InvalidWhitespace
 #[case("\r", Err(Error::InvalidWhitespace("\r".to_string())))]
-// Empty string literal
 #[case("\"\"", Ok(vec![L2TokenType::Normal(TokenType::String("", StringType::Normal))]))]
-// Numeric immediately followed by alphabetic — two distinct tokens
 #[case("12abc", Ok(vec![
     L2TokenType::Normal(TokenType::Number("12")),
     L2TokenType::Normal(TokenType::Identifier("abc")),
 ]))]
-// Multiple consecutive newlines — each emitted individually
 #[case("\n\n", Ok(vec![L2TokenType::Newline, L2TokenType::Newline]))]
-// Unknown L1 token propagates as UnknownToken error
 #[case("\x01", Err(Error::UnknownToken("\x01".to_string())))]
 #[case("\"", Err(Error::UnterminatedString(0)))]
 #[case("x = \"unterminated", Err(Error::UnterminatedString(4)))]
 #[case("f\"unterminated ${name}", Err(Error::UnterminatedString(1)))]
-fn test_l2_tokenization(#[case] source: &str, #[case] expected: Res<Vec<L2TokenType>>) {
+fn test_stage2_tokenization(#[case] source: &str, #[case] expected: Res<Vec<L2TokenType>>) {
     assert_eq!(
         l2_tokenize(l1_tokenize(source))
             .map(|token| {

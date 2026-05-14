@@ -1,14 +1,13 @@
+use lexer::{Brace, BraceDirection, TokenType, lex};
+
 use crate::{
-    Error, Res, TokenType,
-    l1_tokenizer::l1_tokenize,
-    l2_tokenizer::l2_tokenize,
-    l3_tokenizer::{L3Token, l3_tokenize},
+    Error, Res,
+    l3_tokenizer::{L3Token, L3TokenType, l3_tokenize},
 };
 
-// Simplified token type for easier testing (strips ranges)
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct SimpleToken<'a> {
-    token_type: TokenType<'a>,
+    token_type: L3TokenType<'a>,
     line: usize,
     indentation_level: usize,
 }
@@ -23,299 +22,115 @@ impl<'a> From<L3Token<'a>> for SimpleToken<'a> {
     }
 }
 
+fn n(token_type: TokenType<'_>, line: usize, indentation_level: usize) -> SimpleToken<'_> {
+    SimpleToken {
+        token_type: L3TokenType::Normal(token_type),
+        line,
+        indentation_level,
+    }
+}
+
+fn b(
+    brace: Brace,
+    dir: BraceDirection,
+    line: usize,
+    indentation_level: usize,
+) -> SimpleToken<'static> {
+    SimpleToken {
+        token_type: L3TokenType::Brace(brace, dir),
+        line,
+        indentation_level,
+    }
+}
+
 #[rstest::rstest]
-// Empty input
 #[case("", Ok(vec![]))]
-// Single token on single line
-#[case(
-    "fn",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-    ])
-)]
-// Multiple tokens on single line
-#[case(
-    "fn add",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("add"),
-            line: 0,
-            indentation_level: 0,
-        },
-    ])
-)]
-// Multiple lines without indentation
-#[case(
-    "fn add\nreturn",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("add"),
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Return,
-            line: 1,
-            indentation_level: 0,
-        },
-    ])
-)]
-// Single level indentation
-#[case(
-    "fn\n    add",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("add"),
-            line: 1,
-            indentation_level: 1,
-        },
-    ])
-)]
-// Nested indentation (2 levels)
-#[case(
-    "fn\n    if\n        x",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::If,
-            line: 1,
-            indentation_level: 1,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("x"),
-            line: 2,
-            indentation_level: 2,
-        },
-    ])
-)]
-// Indentation reset after newline
-#[case(
-    "fn\n    x\ny",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("x"),
-            line: 1,
-            indentation_level: 1,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("y"),
-            line: 2,
-            indentation_level: 0,
-        },
-    ])
-)]
-// Multiple indented sections at same level
-#[case(
-    "a\n    x\n    y",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Identifier("a"),
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("x"),
-            line: 1,
-            indentation_level: 1,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("y"),
-            line: 2,
-            indentation_level: 1,
-        },
-    ])
-)]
-// Complex nested structure
-#[case(
-    "fn\n    if\n        x\n        y\n    else\n        z",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::If,
-            line: 1,
-            indentation_level: 1,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("x"),
-            line: 2,
-            indentation_level: 2,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("y"),
-            line: 3,
-            indentation_level: 2,
-        },
-        SimpleToken {
-            token_type: TokenType::Else,
-            line: 4,
-            indentation_level: 1,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("z"),
-            line: 5,
-            indentation_level: 2,
-        },
-    ])
-)]
-// Three levels of nesting
-#[case(
-    "a\n    b\n        c\n            d",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Identifier("a"),
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("b"),
-            line: 1,
-            indentation_level: 1,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("c"),
-            line: 2,
-            indentation_level: 2,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("d"),
-            line: 3,
-            indentation_level: 3,
-        },
-    ])
-)]
-// CRLF line ending treated identically to LF
-#[case(
-    "fn\r\n    add",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("add"),
-            line: 1,
-            indentation_level: 1,
-        },
-    ])
-)]
-// Multiple consecutive blank lines — all consumed, line counter advances past each
-#[case(
-    "fn\n\n\n    add",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("add"),
-            line: 3,
-            indentation_level: 1,
-        },
-    ])
-)]
-// Trailing mid-line whitespace — spaces before a newline are silently skipped
-#[case(
-    "fn   \n    add",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("add"),
-            line: 1,
-            indentation_level: 1,
-        },
-    ])
-)]
-// Brace → error
-#[case("{", Err(Error::UnexpectedBrace))]
-// Invalid indentation: 3 spaces (not a multiple of 4)
+#[case("fn", Ok(vec![n(TokenType::Function, 0, 0)]))]
+#[case("fn add", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::Identifier("add"), 0, 0),
+]))]
+#[case("fn add\nreturn", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::Identifier("add"), 0, 0),
+    n(TokenType::Return, 1, 0),
+]))]
+#[case("fn\n    add", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::Identifier("add"), 1, 1),
+]))]
+#[case("fn\n    if\n        x", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::If, 1, 1),
+    n(TokenType::Identifier("x"), 2, 2),
+]))]
+#[case("fn\n    x\ny", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::Identifier("x"), 1, 1),
+    n(TokenType::Identifier("y"), 2, 0),
+]))]
+#[case("a\n    x\n    y", Ok(vec![
+    n(TokenType::Identifier("a"), 0, 0),
+    n(TokenType::Identifier("x"), 1, 1),
+    n(TokenType::Identifier("y"), 2, 1),
+]))]
+#[case("fn\n    if\n        x\n        y\n    else\n        z", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::If, 1, 1),
+    n(TokenType::Identifier("x"), 2, 2),
+    n(TokenType::Identifier("y"), 3, 2),
+    n(TokenType::Else, 4, 1),
+    n(TokenType::Identifier("z"), 5, 2),
+]))]
+#[case("a\n    b\n        c\n            d", Ok(vec![
+    n(TokenType::Identifier("a"), 0, 0),
+    n(TokenType::Identifier("b"), 1, 1),
+    n(TokenType::Identifier("c"), 2, 2),
+    n(TokenType::Identifier("d"), 3, 3),
+]))]
+#[case("fn\r\n    add", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::Identifier("add"), 1, 1),
+]))]
+#[case("fn\n\n\n    add", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::Identifier("add"), 3, 1),
+]))]
+#[case("fn   \n    add", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::Identifier("add"), 1, 1),
+]))]
+#[case("func()", Ok(vec![
+    n(TokenType::Identifier("func"), 0, 0),
+    b(Brace::Round, BraceDirection::Open, 0, 0),
+    b(Brace::Round, BraceDirection::Close, 0, 0),
+]))]
+#[case("{x}", Ok(vec![
+    b(Brace::Curly, BraceDirection::Open, 0, 0),
+    n(TokenType::Identifier("x"), 0, 0),
+    b(Brace::Curly, BraceDirection::Close, 0, 0),
+]))]
+#[case("[x]", Ok(vec![
+    b(Brace::Square, BraceDirection::Open, 0, 0),
+    n(TokenType::Identifier("x"), 0, 0),
+    b(Brace::Square, BraceDirection::Close, 0, 0),
+]))]
 #[case("fn\n   add", Err(Error::InvalidIndentation { found: 3, position: 3 }))]
-// Invalid indentation: 5 spaces
 #[case("x\n     y", Err(Error::InvalidIndentation { found: 5, position: 2 }))]
-// Invalid indentation: 2 spaces
 #[case("a\n  b", Err(Error::InvalidIndentation { found: 2, position: 2 }))]
-// Valid 8-space indentation (2 levels)
-#[case(
-    "x\n        y",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Identifier("x"),
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("y"),
-            line: 1,
-            indentation_level: 2,
-        },
-    ])
-)]
-// Assignment with indentation
-#[case(
-    "fn\n    x = y",
-    Ok(vec![
-        SimpleToken {
-            token_type: TokenType::Function,
-            line: 0,
-            indentation_level: 0,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("x"),
-            line: 1,
-            indentation_level: 1,
-        },
-        SimpleToken {
-            token_type: TokenType::Assignment,
-            line: 1,
-            indentation_level: 1,
-        },
-        SimpleToken {
-            token_type: TokenType::Identifier("y"),
-            line: 1,
-            indentation_level: 1,
-        },
-    ])
-)]
+#[case("x\n        y", Ok(vec![
+    n(TokenType::Identifier("x"), 0, 0),
+    n(TokenType::Identifier("y"), 1, 2),
+]))]
+#[case("fn\n    x = y", Ok(vec![
+    n(TokenType::Function, 0, 0),
+    n(TokenType::Identifier("x"), 1, 1),
+    n(TokenType::Assignment, 1, 1),
+    n(TokenType::Identifier("y"), 1, 1),
+]))]
 fn test_l3_tokenization(#[case] source: &str, #[case] expected: Res<Vec<SimpleToken<'static>>>) {
     assert_eq!(
-        l3_tokenize(l2_tokenize(l1_tokenize(source)))
+        l3_tokenize(lex(source))
             .map(|token| {
                 let token = token?;
                 Ok(SimpleToken::from(token))

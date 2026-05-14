@@ -110,6 +110,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "lexer"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "rstest",
+ "thiserror",
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "memchr"
 version = "2.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -304,10 +314,9 @@ dependencies = [
 name = "tokenizer"
 version = "0.1.0"
 dependencies = [
- "derive_more",
+ "lexer",
  "rstest",
  "thiserror",
- "unicode-segmentation",
 ]
 
 [[package]]

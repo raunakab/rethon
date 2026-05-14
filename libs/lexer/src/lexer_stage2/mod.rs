@@ -1,14 +1,11 @@
-#![doc = include_str!("README.md")]
-
 #[cfg(test)]
 mod tests;
 
 use std::{iter::Peekable, ops::Range};
 
 use crate::{
-    Error, Res,
-    l1_tokenizer::{L1Token, L1TokenType},
-    {Brace, BraceDirection, StringType, TokenType},
+    Brace, BraceDirection, Error, Res, StringType, TokenType,
+    lexer_stage1::{L1Token, L1TokenType},
 };
 
 pub(crate) fn l2_tokenize<'a>(
@@ -34,9 +31,6 @@ where
     type Item = Res<L2Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Helper macro to peek and match on next token
-        // Consumes the token if it matches any of the patterns
-        // Automatically wraps tuple patterns in Some()
         macro_rules! peek {
             ($(($($inner:tt)*) => $result:expr),+ $(, _ => $default:expr)? $(,)?) => {{
                 let next_token = self.iter.peek().and_then(|res| {
@@ -85,42 +79,27 @@ where
                 L2TokenType::Normal(TokenType::String(token, StringType::Normal))
             }
             L1TokenType::Keyword => L2TokenType::Normal(match token {
-                // function keywords
                 "fn" => TokenType::Function,
-
-                // definitional keywords
                 "mut" => TokenType::Mutable,
                 "scope" => TokenType::Scope,
-
-                // control keywords
                 "return" => TokenType::Return,
                 "yield" => TokenType::Yield,
                 "throw" => TokenType::Throw,
                 "otherwise" => TokenType::Otherwise,
-
-                // boolean keywords
                 "true" => TokenType::True,
                 "false" => TokenType::False,
                 "not" => TokenType::Not,
                 "and" => TokenType::And,
                 "or" => TokenType::Or,
-
-                // conditional keywords
                 "for" => TokenType::For,
                 "loop" => TokenType::Loop,
                 "if" => TokenType::If,
                 "else" => TokenType::Else,
-
-                // type-algebra keywords
                 "struct" => TokenType::Struct,
                 "enum" => TokenType::Enum,
-
-                // type-hole keywords
                 "panic" => TokenType::Panic,
                 "todo" => TokenType::Todo,
                 "unimplemented" => TokenType::Unimplemented,
-
-                // Check for formatted string prefix
                 "f" => peek! {
                     (string_content, _, L1TokenType::String) => TokenType::String(string_content, StringType::Formatted),
                     _ => TokenType::Identifier(token),
@@ -203,13 +182,13 @@ where
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct L2Token<'a> {
-    pub(crate) token_type: L2TokenType<'a>,
-    pub(crate) range: Range<usize>,
+pub struct L2Token<'a> {
+    pub token_type: L2TokenType<'a>,
+    pub range: Range<usize>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum L2TokenType<'a> {
+pub enum L2TokenType<'a> {
     Normal(TokenType<'a>),
     Whitespace(usize),
     Newline,

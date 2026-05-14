@@ -1,16 +1,12 @@
 use crate::{
     Error, Res,
-    l1_tokenizer::{L1Token, L1TokenType, l1_tokenize},
+    lexer_stage1::{L1Token, L1TokenType, l1_tokenize},
 };
 
 #[rstest::rstest]
 #[case("", vec![])]
-#[case("a", vec![
-    ("a", L1TokenType::Keyword)
-])]
-#[case("ab", vec![
-    ("ab", L1TokenType::Keyword)
-])]
+#[case("a", vec![("a", L1TokenType::Keyword)])]
+#[case("ab", vec![("ab", L1TokenType::Keyword)])]
 #[case("a b", vec![
     ("a", L1TokenType::Keyword),
     (" ", L1TokenType::Whitespace),
@@ -73,9 +69,7 @@ use crate::{
     (" ", L1TokenType::Whitespace),
     ("}", L1TokenType::Punctuation),
 ])]
-#[case("🙂🙂🙂", vec![
-    ("🙂🙂🙂", L1TokenType::Keyword),
-])]
+#[case("🙂🙂🙂", vec![("🙂🙂🙂", L1TokenType::Keyword)])]
 #[case("🙂🙂🙂 🚀launch🙂🙂!!! 🙃🙂", vec![
     ("🙂🙂🙂", L1TokenType::Keyword),
     (" ", L1TokenType::Whitespace),
@@ -128,15 +122,9 @@ use crate::{
     ("\t", L1TokenType::Whitespace),
     ("values", L1TokenType::Keyword),
 ])]
-#[case("'", vec![
-    ("'", L1TokenType::Punctuation),
-])]
-#[case("`", vec![
-    ("`", L1TokenType::Punctuation),
-])]
-#[case("\"hello\"", vec![
-    ("hello", L1TokenType::String),
-])]
+#[case("'", vec![("'", L1TokenType::Punctuation)])]
+#[case("`", vec![("`", L1TokenType::Punctuation)])]
+#[case("\"hello\"", vec![("hello", L1TokenType::String)])]
 #[case("f\"world\"", vec![
     ("f", L1TokenType::Keyword),
     ("world", L1TokenType::String),
@@ -157,43 +145,28 @@ use crate::{
     ("world", L1TokenType::Keyword),
     ("'", L1TokenType::Punctuation),
 ])]
-// Empty string literal — content between matched quotes is empty
-#[case("\"\"", vec![
-    ("", L1TokenType::String),
-])]
-// String with internal spaces — whitespace inside quotes is captured verbatim
-#[case("\"hello world\"", vec![
-    ("hello world", L1TokenType::String),
-])]
-// String immediately adjacent to a keyword token (no separating space)
+#[case("\"\"", vec![("", L1TokenType::String)])]
+#[case("\"hello world\"", vec![("hello world", L1TokenType::String)])]
 #[case("\"hi\"there", vec![
     ("hi", L1TokenType::String),
     ("there", L1TokenType::Keyword),
 ])]
-// Standalone carriage return — \r is ascii_whitespace so it classifies as Whitespace
-#[case("\r", vec![
-    ("\r", L1TokenType::Whitespace),
-])]
-// Numeric immediately followed by alphabetic — different types force a split
+#[case("\r", vec![("\r", L1TokenType::Whitespace)])]
 #[case("12abc", vec![
     ("12", L1TokenType::Numeric),
     ("abc", L1TokenType::Keyword),
 ])]
-// Multiple consecutive newlines — each \n is emitted individually
 #[case("\n\n", vec![
     ("\n", L1TokenType::Whitespace),
     ("\n", L1TokenType::Whitespace),
 ])]
-// ASCII control character — not whitespace/alpha/digit/punctuation → Unknown
-#[case("\x01", vec![
-    ("\x01", L1TokenType::Unknown),
-])]
+#[case("\x01", vec![("\x01", L1TokenType::Unknown)])]
 #[case("`backtick`", vec![
     ("`", L1TokenType::Punctuation),
     ("backtick", L1TokenType::Keyword),
     ("`", L1TokenType::Punctuation),
 ])]
-fn test(#[case] source: &str, #[case] expected: Vec<(&str, L1TokenType)>) {
+fn test_stage1_tokenization(#[case] source: &str, #[case] expected: Vec<(&str, L1TokenType)>) {
     assert_eq!(
         l1_tokenize(source)
             .map(|res| {
@@ -208,13 +181,10 @@ fn test(#[case] source: &str, #[case] expected: Vec<(&str, L1TokenType)>) {
 }
 
 #[rstest::rstest]
-// Opening quote with nothing after it
 #[case("\"", Error::UnterminatedString(0))]
-// Unclosed string starting at byte 0
 #[case("\"hello", Error::UnterminatedString(0))]
-// Unclosed string appearing after other tokens — byte offset points into the source
 #[case("x \"hello", Error::UnterminatedString(2))]
-fn test_error(#[case] source: &str, #[case] expected: Error) {
+fn test_stage1_errors(#[case] source: &str, #[case] expected: Error) {
     assert_eq!(
         l1_tokenize(source).collect::<Res<Vec<_>>>().unwrap_err(),
         expected

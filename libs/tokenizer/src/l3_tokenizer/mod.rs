@@ -1,20 +1,16 @@
-#![doc = include_str!("README.md")]
-
 #[cfg(test)]
 mod tests;
 
 use std::iter::Peekable;
 
-use crate::{
-    Error, Res,
-    l2_tokenizer::{L2Token, L2TokenType},
-    {Position, TokenType},
-};
+use lexer::{Brace, BraceDirection, L2Token, L2TokenType, TokenType};
+
+use crate::{Error, Position, Res};
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
 
 pub(crate) fn l3_tokenize<'a>(
-    iter: impl Iterator<Item = Res<L2Token<'a>>>,
+    iter: impl Iterator<Item = lexer::Res<L2Token<'a>>>,
 ) -> impl Iterator<Item = Res<L3Token<'a>>> {
     L3Tokenizer {
         iter: iter.peekable(),
@@ -28,7 +24,7 @@ pub(crate) fn l3_tokenize<'a>(
 #[derive(Debug, Clone)]
 struct L3Tokenizer<'a, I>
 where
-    I: Iterator<Item = Res<L2Token<'a>>>,
+    I: Iterator<Item = lexer::Res<L2Token<'a>>>,
 {
     iter: Peekable<I>,
     line: usize,
@@ -38,35 +34,37 @@ where
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum L3TokenType<'a> {
+    Normal(TokenType<'a>),
+    Brace(Brace, BraceDirection),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct L3Token<'a> {
-    pub(crate) token_type: TokenType<'a>,
+    pub(crate) token_type: L3TokenType<'a>,
     pub(crate) position: Position,
 }
 
 impl<'a, I> Iterator for L3Tokenizer<'a, I>
 where
-    I: Iterator<Item = Res<L2Token<'a>>>,
+    I: Iterator<Item = lexer::Res<L2Token<'a>>>,
 {
     type Item = Res<L3Token<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let l2_token = match self.iter.next()? {
             Ok(l2_token) => l2_token,
-            Err(error) => return Some(Err(error)),
+            Err(error) => return Some(Err(error.into())),
         };
 
-        // Handle newline: increment line counter and reset state
         if matches!(l2_token.token_type, L2TokenType::Newline) {
             self.line += 1;
             self.line_position = 0;
             self.indentation_level = 0;
             self.after_newline = true;
-
-            // Skip newline tokens - don't emit them
             return self.next();
         }
 
-        // Handle whitespace after newline for indentation
         if self.after_newline {
             self.after_newline = false;
 
@@ -80,19 +78,15 @@ where
 
                 self.indentation_level = count / INDENTATION_SIZE;
                 self.line_position += count;
-
-                // Skip indentation whitespace - don't emit it
                 return self.next();
             }
         }
 
-        // Regular token processing
         let token_length = l2_token.range.end - l2_token.range.start;
 
-        // Extract the actual TokenType from L2TokenType
         let token_type = match l2_token.token_type {
-            L2TokenType::Normal(tt) => tt,
-            L2TokenType::Brace(_, _) => return Some(Err(Error::UnexpectedBrace)),
+            L2TokenType::Normal(tt) => L3TokenType::Normal(tt),
+            L2TokenType::Brace(brace, dir) => L3TokenType::Brace(brace, dir),
             L2TokenType::Whitespace(_) | L2TokenType::Newline => {
                 self.line_position += token_length;
                 return self.next();

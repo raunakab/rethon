@@ -1,0 +1,23 @@
+use lexer::{L2TokenType, lex};
+
+static SOURCE: &str = "\
+fn add(x, y)
+    return x + y
+";
+
+fn main() {
+    println!("=== Source ===");
+    println!("{SOURCE}");
+
+    println!("=== Lex stream ===");
+    for result in lex(SOURCE) {
+        let token = result.unwrap();
+        match token.token_type {
+            L2TokenType::Newline => println!("↵"),
+            L2TokenType::Whitespace(n) => print!("{}", " ".repeat(n)),
+            L2TokenType::Normal(ty) => print!("[{ty}] "),
+            L2TokenType::Brace(brace, dir) => print!("[{brace:?}/{dir:?}] "),
+        }
+    }
+    println!();
+}
