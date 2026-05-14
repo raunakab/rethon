@@ -2,7 +2,7 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{LexType, Res};
+use scoper::{LexType, Res};
 
 #[rstest::rstest]
 // Bare if with no body

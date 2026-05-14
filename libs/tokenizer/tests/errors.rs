@@ -1,7 +1,7 @@
 mod common;
 
 use common::collect;
-use tokenizer::Error;
+use scoper::Error;
 
 #[rstest::rstest]
 // Unterminated string errors (lex-level)

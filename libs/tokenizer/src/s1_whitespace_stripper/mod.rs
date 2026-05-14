@@ -9,10 +9,10 @@ use crate::{Error, Position, Res};
 
 pub(crate) const INDENTATION_SIZE: usize = 4;
 
-pub(crate) fn l3_tokenize<'a>(
+pub(crate) fn strip<'a>(
     iter: impl Iterator<Item = lexer::Res<LexItem<'a>>>,
-) -> impl Iterator<Item = Res<L3Token<'a>>> {
-    L3Tokenizer {
+) -> impl Iterator<Item = Res<StrippedToken<'a>>> {
+    WhitespaceStripper {
         iter: iter.peekable(),
         line: 0,
         line_position: 0,
@@ -22,7 +22,7 @@ pub(crate) fn l3_tokenize<'a>(
 }
 
 #[derive(Debug, Clone)]
-struct L3Tokenizer<'a, I>
+struct WhitespaceStripper<'a, I>
 where
     I: Iterator<Item = lexer::Res<LexItem<'a>>>,
 {
@@ -34,30 +34,30 @@ where
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum L3TokenType<'a> {
+pub(crate) enum StrippedTokenKind<'a> {
     Normal(LexType<'a>),
     Brace(Brace, BraceDirection),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct L3Token<'a> {
-    pub(crate) token_type: L3TokenType<'a>,
+pub(crate) struct StrippedToken<'a> {
+    pub(crate) kind: StrippedTokenKind<'a>,
     pub(crate) position: Position,
 }
 
-impl<'a, I> Iterator for L3Tokenizer<'a, I>
+impl<'a, I> Iterator for WhitespaceStripper<'a, I>
 where
     I: Iterator<Item = lexer::Res<LexItem<'a>>>,
 {
-    type Item = Res<L3Token<'a>>;
+    type Item = Res<StrippedToken<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let lex_token = match self.iter.next()? {
-            Ok(token) => token,
+        let lex_item = match self.iter.next()? {
+            Ok(item) => item,
             Err(error) => return Some(Err(error.into())),
         };
 
-        if matches!(lex_token.kind, LexKind::Newline) {
+        if matches!(lex_item.kind, LexKind::Newline) {
             self.line += 1;
             self.line_position = 0;
             self.indentation_level = 0;
@@ -68,11 +68,11 @@ where
         if self.after_newline {
             self.after_newline = false;
 
-            if let LexKind::Whitespace(count) = lex_token.kind {
+            if let LexKind::Whitespace(count) = lex_item.kind {
                 if count % INDENTATION_SIZE != 0 {
                     return Some(Err(Error::InvalidIndentation {
                         found: count,
-                        position: lex_token.range.start,
+                        position: lex_item.range.start,
                     }));
                 }
 
@@ -82,21 +82,21 @@ where
             }
         }
 
-        let token_length = lex_token.range.end - lex_token.range.start;
+        let token_length = lex_item.range.end - lex_item.range.start;
 
-        let token_type = match lex_token.kind {
-            LexKind::Normal(tt) => L3TokenType::Normal(tt),
-            LexKind::Brace(brace, dir) => L3TokenType::Brace(brace, dir),
+        let kind = match lex_item.kind {
+            LexKind::Normal(tt) => StrippedTokenKind::Normal(tt),
+            LexKind::Brace(brace, dir) => StrippedTokenKind::Brace(brace, dir),
             LexKind::Whitespace(_) | LexKind::Newline => {
                 self.line_position += token_length;
                 return self.next();
             }
         };
 
-        let result = L3Token {
-            token_type,
+        let result = StrippedToken {
+            kind,
             position: Position {
-                source_range: lex_token.range,
+                source_range: lex_item.range,
                 line: self.line,
                 line_range: self.line_position..self.line_position + token_length,
                 indentation_level: self.indentation_level,

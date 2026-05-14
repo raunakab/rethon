@@ -11,8 +11,8 @@ macro_rules! tokens {
     };
 }
 
-mod l3_tokenizer;
-mod l4_tokenizer;
+mod s1_whitespace_stripper;
+mod s2_scoper;
 
 use std::ops::Range;
 
@@ -21,14 +21,14 @@ use thiserror::Error;
 pub use lexer::{Brace, BraceDirection, LexType, StringType};
 
 use crate::{
-    l3_tokenizer::{INDENTATION_SIZE, l3_tokenize},
-    l4_tokenizer::l4_tokenize,
+    s1_whitespace_stripper::{INDENTATION_SIZE, strip},
+    s2_scoper::scope as scope_inner,
 };
 
 pub type Res<T = ()> = Result<T, Error>;
 
-pub fn tokenize(source: &str) -> tokens!() {
-    l4_tokenize(l3_tokenize(lexer::lex(source))).peekable()
+pub fn scope(source: &str) -> tokens!() {
+    scope_inner(strip(lexer::lex(source))).peekable()
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Error)]

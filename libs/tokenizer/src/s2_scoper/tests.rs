@@ -1,8 +1,8 @@
 use lexer::lex;
 
-use crate::{
-    Brace, Error, LexType, Res, Token, l3_tokenizer::l3_tokenize, l4_tokenizer::l4_tokenize,
-};
+use crate::{Brace, Error, LexType, Res, Token, s1_whitespace_stripper::strip};
+
+use super::scope;
 
 // Simplified node type for easier testing (strips ranges and source positions)
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -230,7 +230,7 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
         SimpleNode::Token(LexType::Identifier("a"), 0),
     ])
 )]
-// Error propagation from L3 (invalid indentation reaches L4 unchanged)
+// Error propagation from s1 (invalid indentation reaches s2 unchanged)
 #[case(
     "a\n   b",
     Err(Error::InvalidIndentation { found: 3, position: 2 })
@@ -249,9 +249,9 @@ fn simplify_node(node: Token<'_>) -> SimpleNode<'_> {
         SimpleNode::ScopeEnd,
     ])
 )]
-fn test_l4_tokenization(#[case] source: &str, #[case] expected: Res<Vec<SimpleNode<'static>>>) {
+fn test_s2_scope(#[case] source: &str, #[case] expected: Res<Vec<SimpleNode<'static>>>) {
     assert_eq!(
-        l4_tokenize(l3_tokenize(lex(source)))
+        scope(strip(lex(source)))
             .map(|res| res.map(simplify_node))
             .collect::<Res<Vec<_>>>(),
         expected

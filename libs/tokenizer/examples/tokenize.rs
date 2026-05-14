@@ -1,4 +1,4 @@
-use tokenizer::{Token, tokenize};
+use scoper::{Token, scope};
 
 static SOURCE: &str = "
 num = rand()
@@ -24,7 +24,7 @@ fn main() {
     println!("\n=== Token stream ===");
 
     let mut depth = 0usize;
-    for result in tokenize(SOURCE) {
+    for result in scope(SOURCE) {
         let result = result.unwrap();
         match result {
             Token::ScopeStart(_) => {

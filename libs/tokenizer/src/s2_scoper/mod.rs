@@ -1,5 +1,3 @@
-#![doc = include_str!("README.md")]
-
 #[cfg(test)]
 mod tests;
 
@@ -9,13 +7,13 @@ use lexer::BraceDirection;
 
 use crate::{
     Res, Token,
-    l3_tokenizer::{L3Token, L3TokenType},
+    s1_whitespace_stripper::{StrippedToken, StrippedTokenKind},
 };
 
-pub(crate) fn l4_tokenize<'a>(
-    iter: impl Iterator<Item = Res<L3Token<'a>>>,
+pub(crate) fn scope<'a>(
+    iter: impl Iterator<Item = Res<StrippedToken<'a>>>,
 ) -> impl Iterator<Item = Res<Token<'a>>> {
-    L4Tokenizer {
+    Scoper {
         iter: iter.peekable(),
         indent_stack: vec![0],
         pending_scope_ends: 0,
@@ -23,9 +21,9 @@ pub(crate) fn l4_tokenize<'a>(
     }
 }
 
-struct L4Tokenizer<'a, I>
+struct Scoper<'a, I>
 where
-    I: Iterator<Item = Res<L3Token<'a>>>,
+    I: Iterator<Item = Res<StrippedToken<'a>>>,
 {
     iter: Peekable<I>,
     indent_stack: Vec<usize>,
@@ -33,9 +31,9 @@ where
     pending_scope_starts: usize,
 }
 
-impl<'a, I> Iterator for L4Tokenizer<'a, I>
+impl<'a, I> Iterator for Scoper<'a, I>
 where
-    I: Iterator<Item = Res<L3Token<'a>>>,
+    I: Iterator<Item = Res<StrippedToken<'a>>>,
 {
     type Item = Res<Token<'a>>;
 
@@ -114,14 +112,14 @@ where
             emit_scope_end!();
         }
 
-        let l3_token = self.iter.next().unwrap().unwrap();
-        Some(Ok(match l3_token.token_type {
-            L3TokenType::Normal(tt) => Token::Token(tt, l3_token.position),
-            L3TokenType::Brace(brace, BraceDirection::Open) => {
-                Token::ScopeStart(Some((brace, l3_token.position)))
+        let stripped = self.iter.next().unwrap().unwrap();
+        Some(Ok(match stripped.kind {
+            StrippedTokenKind::Normal(tt) => Token::Token(tt, stripped.position),
+            StrippedTokenKind::Brace(brace, BraceDirection::Open) => {
+                Token::ScopeStart(Some((brace, stripped.position)))
             }
-            L3TokenType::Brace(brace, BraceDirection::Close) => {
-                Token::ScopeEnd(Some((brace, l3_token.position)))
+            StrippedTokenKind::Brace(brace, BraceDirection::Close) => {
+                Token::ScopeEnd(Some((brace, stripped.position)))
             }
         }))
     }

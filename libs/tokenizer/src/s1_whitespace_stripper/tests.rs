@@ -2,20 +2,20 @@ use lexer::{Brace, BraceDirection, LexType, lex};
 
 use crate::{
     Error, Res,
-    l3_tokenizer::{L3Token, L3TokenType, l3_tokenize},
+    s1_whitespace_stripper::{StrippedToken, StrippedTokenKind, strip},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct SimpleToken<'a> {
-    token_type: L3TokenType<'a>,
+    kind: StrippedTokenKind<'a>,
     line: usize,
     indentation_level: usize,
 }
 
-impl<'a> From<L3Token<'a>> for SimpleToken<'a> {
-    fn from(token: L3Token<'a>) -> Self {
+impl<'a> From<StrippedToken<'a>> for SimpleToken<'a> {
+    fn from(token: StrippedToken<'a>) -> Self {
         SimpleToken {
-            token_type: token.token_type,
+            kind: token.kind,
             line: token.position.line,
             indentation_level: token.position.indentation_level,
         }
@@ -24,7 +24,7 @@ impl<'a> From<L3Token<'a>> for SimpleToken<'a> {
 
 fn n(token_type: LexType<'_>, line: usize, indentation_level: usize) -> SimpleToken<'_> {
     SimpleToken {
-        token_type: L3TokenType::Normal(token_type),
+        kind: StrippedTokenKind::Normal(token_type),
         line,
         indentation_level,
     }
@@ -37,7 +37,7 @@ fn b(
     indentation_level: usize,
 ) -> SimpleToken<'static> {
     SimpleToken {
-        token_type: L3TokenType::Brace(brace, dir),
+        kind: StrippedTokenKind::Brace(brace, dir),
         line,
         indentation_level,
     }
@@ -128,9 +128,9 @@ fn b(
     n(LexType::Assignment, 1, 1),
     n(LexType::Identifier("y"), 1, 1),
 ]))]
-fn test_l3_tokenization(#[case] source: &str, #[case] expected: Res<Vec<SimpleToken<'static>>>) {
+fn test_s1_strip(#[case] source: &str, #[case] expected: Res<Vec<SimpleToken<'static>>>) {
     assert_eq!(
-        l3_tokenize(lex(source))
+        strip(lex(source))
             .map(|token| {
                 let token = token?;
                 Ok(SimpleToken::from(token))

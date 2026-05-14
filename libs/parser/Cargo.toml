@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-tokenizer.workspace = true
+scoper.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]

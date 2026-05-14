@@ -2,7 +2,7 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{LexType, Res, StringType};
+use scoper::{LexType, Res, StringType};
 
 #[rstest::rstest]
 // Constant assignment with integer

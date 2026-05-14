@@ -1,5 +1,5 @@
 [package]
-name = "tokenizer"
+name = "scoper"
 version.workspace = true
 edition.workspace = true
 

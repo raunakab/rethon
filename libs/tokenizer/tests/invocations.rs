@@ -2,7 +2,7 @@ mod common;
 
 use common::S::{Close, Open, T};
 use common::{S, collect};
-use tokenizer::{LexType, Res};
+use scoper::{LexType, Res};
 
 #[rstest::rstest]
 // No arguments
@@ -64,7 +64,7 @@ use tokenizer::{LexType, Res};
     Ok(vec![
         T(LexType::Identifier("func")),
         Open,
-        T(LexType::String("hello", tokenizer::StringType::Normal)),
+        T(LexType::String("hello", scoper::StringType::Normal)),
         Close,
     ])
 )]

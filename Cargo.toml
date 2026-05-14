@@ -10,5 +10,5 @@ rstest = "0.25.0"
 thiserror = "2.0"
 derive_more = { version = "1.0", features = ["display"] }
 lexer = { path = "libs/lexer" }
-tokenizer = { path = "libs/tokenizer" }
+scoper = { path = "libs/tokenizer" }
 parser = { path = "libs/parser" }
