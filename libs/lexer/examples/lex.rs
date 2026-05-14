@@ -2,14 +2,14 @@ use lexer::{LexKind, lex};
 
 static SOURCE: &str = "\
 fn add(x, y)
-    return x + y
-";
+    return x + y";
 
 fn main() {
     println!("=== Source ===");
     println!("{SOURCE}");
+    println!();
 
-    println!("=== Lex stream ===");
+    println!("=== Lexed ===");
     for result in lex(SOURCE) {
         let token = result.unwrap();
         match token.kind {
@@ -19,5 +19,4 @@ fn main() {
             LexKind::Brace(brace, dir) => print!("[{brace:?}/{dir:?}]"),
         }
     }
-    println!();
 }
