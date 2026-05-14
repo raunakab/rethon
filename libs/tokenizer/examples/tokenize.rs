@@ -1,4 +1,4 @@
-use scoper::{Token, scope};
+use scoper::{ScopeItem, scope};
 
 static SOURCE: &str = "
 num = rand()
@@ -27,15 +27,15 @@ fn main() {
     for result in scope(SOURCE) {
         let result = result.unwrap();
         match result {
-            Token::ScopeStart(_) => {
+            ScopeItem::ScopeStart(_) => {
                 println!("{}{{", "    ".repeat(depth));
                 depth = depth.saturating_add(1);
             }
-            Token::ScopeEnd(_) => {
+            ScopeItem::ScopeEnd(_) => {
                 depth = depth.saturating_sub(1);
                 println!("{}}}", "    ".repeat(depth));
             }
-            Token::Token(ty, _) => {
+            ScopeItem::Token(ty, _) => {
                 println!("{}{ty}", "    ".repeat(depth));
             }
         }

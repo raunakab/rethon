@@ -6,13 +6,13 @@ use std::iter::Peekable;
 use lexer::BraceDirection;
 
 use crate::{
-    Res, Token,
+    Res, ScopeItem,
     s1_whitespace_stripper::{StrippedToken, StrippedTokenKind},
 };
 
 pub(crate) fn scope<'a>(
     iter: impl Iterator<Item = Res<StrippedToken<'a>>>,
-) -> impl Iterator<Item = Res<Token<'a>>> {
+) -> impl Iterator<Item = Res<ScopeItem<'a>>> {
     Scoper {
         iter: iter.peekable(),
         indent_stack: vec![0],
@@ -35,7 +35,7 @@ impl<'a, I> Iterator for Scoper<'a, I>
 where
     I: Iterator<Item = Res<StrippedToken<'a>>>,
 {
-    type Item = Res<Token<'a>>;
+    type Item = Res<ScopeItem<'a>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         macro_rules! build_scope_end {
@@ -54,7 +54,7 @@ where
             () => {
                 if self.pending_scope_ends > 0 {
                     self.pending_scope_ends -= 1;
-                    return Some(Ok(Token::ScopeEnd(None)));
+                    return Some(Ok(ScopeItem::ScopeEnd(None)));
                 }
             };
         }
@@ -63,7 +63,7 @@ where
             () => {
                 if self.pending_scope_starts > 0 {
                     self.pending_scope_starts -= 1;
-                    return Some(Ok(Token::ScopeStart(None)));
+                    return Some(Ok(ScopeItem::ScopeStart(None)));
                 }
             };
         }
@@ -114,12 +114,12 @@ where
 
         let stripped = self.iter.next().unwrap().unwrap();
         Some(Ok(match stripped.kind {
-            StrippedTokenKind::Normal(tt) => Token::Token(tt, stripped.position),
+            StrippedTokenKind::Normal(tt) => ScopeItem::Token(tt, stripped.position),
             StrippedTokenKind::Brace(brace, BraceDirection::Open) => {
-                Token::ScopeStart(Some((brace, stripped.position)))
+                ScopeItem::ScopeStart(Some((brace, stripped.position)))
             }
             StrippedTokenKind::Brace(brace, BraceDirection::Close) => {
-                Token::ScopeEnd(Some((brace, stripped.position)))
+                ScopeItem::ScopeEnd(Some((brace, stripped.position)))
             }
         }))
     }

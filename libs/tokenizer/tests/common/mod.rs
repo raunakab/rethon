@@ -1,4 +1,4 @@
-use scoper::{LexType, Res, Token, scope};
+use scoper::{LexType, Res, ScopeItem, scope};
 
 #[derive(Debug, PartialEq)]
 pub enum S<'a> {
@@ -11,9 +11,9 @@ pub fn collect(source: &str) -> Res<Vec<S<'_>>> {
     scope(source)
         .map(|res| {
             res.map(|token| match token {
-                Token::Token(ty, _) => S::T(ty),
-                Token::ScopeStart(_) => S::Open,
-                Token::ScopeEnd(_) => S::Close,
+                ScopeItem::Token(ty, _) => S::T(ty),
+                ScopeItem::ScopeStart(_) => S::Open,
+                ScopeItem::ScopeEnd(_) => S::Close,
             })
         })
         .collect()

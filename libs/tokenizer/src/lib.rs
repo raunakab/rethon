@@ -4,10 +4,10 @@ macro_rules! tokens {
         $l:lifetime
         $(,)?
     ) => {
-        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::Token<$l>>>>
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::ScopeItem<$l>>>>
     };
     () => {
-        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::Token<'_>>>>
+        std::iter::Peekable<impl Iterator<Item = $crate::Res<$crate::ScopeItem<'_>>>>
     };
 }
 
@@ -31,20 +31,8 @@ pub fn scope(source: &str) -> tokens!() {
     scope_inner(strip(lexer::lex(source))).peekable()
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Error)]
-pub enum Error {
-    #[error(transparent)]
-    Lex(#[from] lexer::Error),
-
-    #[error(
-        "Invalid indentation at byte {position}: expected multiple of {}, found {found}",
-        INDENTATION_SIZE
-    )]
-    InvalidIndentation { found: usize, position: usize },
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Token<'a> {
+pub enum ScopeItem<'a> {
     Token(LexType<'a>, Position),
     ScopeStart(Option<(Brace, Position)>),
     ScopeEnd(Option<(Brace, Position)>),
@@ -56,4 +44,16 @@ pub struct Position {
     pub line: usize,
     pub line_range: Range<usize>,
     pub indentation_level: usize,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Error)]
+pub enum Error {
+    #[error(transparent)]
+    Lex(#[from] lexer::Error),
+
+    #[error(
+        "Invalid indentation at byte {position}: expected multiple of {}, found {found}",
+        INDENTATION_SIZE
+    )]
+    InvalidIndentation { found: usize, position: usize },
 }
