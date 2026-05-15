@@ -30,8 +30,7 @@ pub fn lex(source: &str) -> tokens!() {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TokenTree<'a> {
     Token(Token<'a>, Position),
-    Start(Option<(Brace, Position)>),
-    End(Option<(Brace, Position)>),
+    Scope((BraceDirection, Option<(Brace, Position)>)),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -75,8 +74,6 @@ pub enum Token<'a> {
     Yield,
     #[display("throw")]
     Throw,
-    #[display("otherwise")]
-    Otherwise,
     #[display("true")]
     True,
     #[display("false")]
@@ -135,6 +132,8 @@ pub enum Token<'a> {
     DoubleMinus,
     #[display("->")]
     Arrow,
+    #[display("=>")]
+    FatArrow,
     #[display("*")]
     Asterisk,
     #[display("**")]

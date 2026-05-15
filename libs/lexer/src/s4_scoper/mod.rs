@@ -52,7 +52,7 @@ where
             () => {
                 if self.pending_scope_ends > 0 {
                     self.pending_scope_ends -= 1;
-                    return Some(Ok(TokenTree::End(None)));
+                    return Some(Ok(TokenTree::Scope((BraceDirection::Close, None))));
                 }
             };
         }
@@ -61,7 +61,7 @@ where
             () => {
                 if self.pending_scope_starts > 0 {
                     self.pending_scope_starts -= 1;
-                    return Some(Ok(TokenTree::Start(None)));
+                    return Some(Ok(TokenTree::Scope((BraceDirection::Open, None))));
                 }
             };
         }
@@ -113,11 +113,8 @@ where
         let stripped = self.iter.next().unwrap().unwrap();
         Some(Ok(match stripped.kind {
             StrippedTokenKind::Normal(tt) => TokenTree::Token(tt, stripped.position),
-            StrippedTokenKind::Brace(brace, BraceDirection::Open) => {
-                TokenTree::Start(Some((brace, stripped.position)))
-            }
-            StrippedTokenKind::Brace(brace, BraceDirection::Close) => {
-                TokenTree::End(Some((brace, stripped.position)))
+            StrippedTokenKind::Brace(brace, direction) => {
+                TokenTree::Scope((direction, Some((brace, stripped.position))))
             }
         }))
     }

@@ -1,4 +1,4 @@
-use lexer::{Brace, Res, StringType, Token, TokenTree, lex};
+use lexer::{Brace, BraceDirection, Res, StringType, Token, TokenTree, lex};
 
 #[derive(Debug, PartialEq)]
 enum S<'a> {
@@ -21,7 +21,6 @@ enum S<'a> {
 #[case("return", Ok(vec![S::T(Token::Return)]))]
 #[case("yield", Ok(vec![S::T(Token::Yield)]))]
 #[case("throw", Ok(vec![S::T(Token::Throw)]))]
-#[case("otherwise", Ok(vec![S::T(Token::Otherwise)]))]
 #[case("not", Ok(vec![S::T(Token::Not)]))]
 #[case("and", Ok(vec![S::T(Token::And)]))]
 #[case("or", Ok(vec![S::T(Token::Or)]))]
@@ -52,6 +51,7 @@ enum S<'a> {
 #[case(":=", Ok(vec![S::T(Token::StaticAssignment)]))]
 #[case("=", Ok(vec![S::T(Token::Assignment)]))]
 #[case("==", Ok(vec![S::T(Token::Equals)]))]
+#[case("=>", Ok(vec![S::T(Token::FatArrow)]))]
 #[case("!", Ok(vec![S::T(Token::Promotion)]))]
 #[case("!foo", Ok(vec![S::T(Token::MacroIdentifier("foo"))]))]
 #[case("?", Ok(vec![S::T(Token::Coalescence)]))]
@@ -133,10 +133,10 @@ fn test_lex(#[case] source: &str, #[case] expected: Res<Vec<S<'static>>>) {
             .map(|res| {
                 res.map(|node| match node {
                     TokenTree::Token(t, _) => S::T(t),
-                    TokenTree::Start(None) => S::Open,
-                    TokenTree::End(None) => S::Close,
-                    TokenTree::Start(Some((b, _))) => S::BraceOpen(b),
-                    TokenTree::End(Some((b, _))) => S::BraceClose(b),
+                    TokenTree::Scope((BraceDirection::Open, None)) => S::Open,
+                    TokenTree::Scope((BraceDirection::Close, None)) => S::Close,
+                    TokenTree::Scope((BraceDirection::Open, Some((b, _)))) => S::BraceOpen(b),
+                    TokenTree::Scope((BraceDirection::Close, Some((b, _)))) => S::BraceClose(b),
                 })
             })
             .collect::<Res<Vec<S<'_>>>>(),

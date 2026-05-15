@@ -138,10 +138,8 @@ fn parse_macro<'a>(tokens: &mut tokens!('a)) -> Res<Macro> {
     todo!()
 }
 
-fn parse_pattern_match_fail<'a>(tokens: &mut tokens!('a)) -> Res<PatternMatchFail<'a>> {
-    stepif!((Token::Otherwise, original_indent_level) = tokens);
-    let scope = parse_items(tokens, original_indent_level.checked_add(1).unwrap())?;
-    Ok(Some(scope))
+fn parse_pattern_match_fail<'a>(_tokens: &mut tokens!('a)) -> Res<PatternMatchFail<'a>> {
+    Ok(None)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

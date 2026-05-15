@@ -1,4 +1,4 @@
-use lexer::{TokenTree, lex};
+use lexer::{BraceDirection, TokenTree, lex};
 
 static SOURCE: &str = "num = rand()
 
@@ -25,11 +25,11 @@ fn main() {
     for result in lex(SOURCE) {
         let result = result.unwrap();
         match result {
-            TokenTree::Start(_) => {
+            TokenTree::Scope((BraceDirection::Open, _)) => {
                 println!("{}(", "    ".repeat(depth));
                 depth = depth.saturating_add(1);
             }
-            TokenTree::End(_) => {
+            TokenTree::Scope((BraceDirection::Close, _)) => {
                 depth = depth.saturating_sub(1);
                 println!("{})", "    ".repeat(depth));
             }

@@ -1,4 +1,4 @@
-use lexer::{Res, Token, TokenTree, lex};
+use lexer::{BraceDirection, Res, Token, TokenTree, lex};
 
 #[derive(Debug, PartialEq)]
 pub enum S<'a> {
@@ -12,8 +12,8 @@ pub fn collect(source: &str) -> Res<Vec<S<'_>>> {
         .map(|res| {
             res.map(|token| match token {
                 TokenTree::Token(ty, _) => S::T(ty),
-                TokenTree::Start(_) => S::Open,
-                TokenTree::End(_) => S::Close,
+                TokenTree::Scope((BraceDirection::Open, _)) => S::Open,
+                TokenTree::Scope((BraceDirection::Close, _)) => S::Close,
             })
         })
         .collect()

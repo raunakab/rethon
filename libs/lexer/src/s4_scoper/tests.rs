@@ -1,6 +1,6 @@
 use crate::{
-    Brace, Error, Res, Token, TokenTree, s1_segmenter::segment, s2_clusterer::cluster,
-    s3_whitespace_stripper::whitespace_strip,
+    Brace, BraceDirection, Error, Res, Token, TokenTree, s1_segmenter::segment,
+    s2_clusterer::cluster, s3_whitespace_stripper::whitespace_strip,
 };
 
 use super::scope;
@@ -18,8 +18,10 @@ fn simplify_node(node: TokenTree<'_>) -> SimpleNode<'_> {
         TokenTree::Token(token_type, position) => {
             SimpleNode::Token(token_type, position.indentation_level)
         }
-        TokenTree::Start(brace_opt) => SimpleNode::ScopeStart(brace_opt.map(|(brace, _)| brace)),
-        TokenTree::End(_) => SimpleNode::ScopeEnd,
+        TokenTree::Scope((BraceDirection::Open, brace_opt)) => {
+            SimpleNode::ScopeStart(brace_opt.map(|(brace, _)| brace))
+        }
+        TokenTree::Scope((BraceDirection::Close, _)) => SimpleNode::ScopeEnd,
     }
 }
 

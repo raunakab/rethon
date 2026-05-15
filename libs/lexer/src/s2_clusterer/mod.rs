@@ -83,7 +83,6 @@ where
                 "return" => Token::Return,
                 "yield" => Token::Yield,
                 "throw" => Token::Throw,
-                "otherwise" => Token::Otherwise,
                 "true" => Token::True,
                 "false" => Token::False,
                 "not" => Token::Not,
@@ -119,6 +118,7 @@ where
                 "," => LexKind::Normal(Token::Comma),
                 "=" => LexKind::Normal(peek! {
                     ("=", ..) => Token::Equals,
+                    (">", ..) => Token::FatArrow,
                     _ => Token::Assignment,
                 }),
                 "!" => LexKind::Normal(peek! {
