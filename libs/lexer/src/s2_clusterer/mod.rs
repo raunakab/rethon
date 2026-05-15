@@ -79,7 +79,6 @@ where
             SegmentKind::Keyword => LexKind::Normal(match text {
                 "fn" => Token::Function,
                 "mut" => Token::Mutable,
-                "scope" => Token::Scope,
                 "return" => Token::Return,
                 "yield" => Token::Yield,
                 "throw" => Token::Throw,
@@ -88,7 +87,6 @@ where
                 "not" => Token::Not,
                 "and" => Token::And,
                 "or" => Token::Or,
-                "for" => Token::For,
                 "loop" => Token::Loop,
                 "if" => Token::If,
                 "else" => Token::Else,

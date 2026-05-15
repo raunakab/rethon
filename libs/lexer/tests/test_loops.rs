@@ -9,7 +9,7 @@ use lexer::{Res, Token};
 #[case(
     "for items",
     Ok(vec![
-        T(Token::For),
+        T(Token::Identifier("for")),
         T(Token::Identifier("items")),
     ])
 )]
@@ -22,7 +22,7 @@ use lexer::{Res, Token};
 #[case(
     "for items\n    x := item",
     Ok(vec![
-        T(Token::For),
+        T(Token::Identifier("for")),
         T(Token::Identifier("items")),
         Open,
         T(Token::Identifier("x")),
@@ -47,7 +47,7 @@ use lexer::{Res, Token};
 #[case(
     "for items\n    x := item\n    y := x",
     Ok(vec![
-        T(Token::For),
+        T(Token::Identifier("for")),
         T(Token::Identifier("items")),
         Open,
         T(Token::Identifier("x")),
@@ -63,10 +63,10 @@ use lexer::{Res, Token};
 #[case(
     "for xs\n    for ys\n        x := y",
     Ok(vec![
-        T(Token::For),
+        T(Token::Identifier("for")),
         T(Token::Identifier("xs")),
         Open,
-        T(Token::For),
+        T(Token::Identifier("for")),
         T(Token::Identifier("ys")),
         Open,
         T(Token::Identifier("x")),
@@ -98,7 +98,7 @@ use lexer::{Res, Token};
         T(Token::Function),
         T(Token::Identifier("f")),
         Open,
-        T(Token::For),
+        T(Token::Identifier("for")),
         T(Token::Identifier("xs")),
         Open,
         T(Token::Identifier("x")),

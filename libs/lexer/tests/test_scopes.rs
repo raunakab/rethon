@@ -8,13 +8,13 @@ use lexer::{Res, Token};
 // Bare scope keyword with no body
 #[case(
     "scope",
-    Ok(vec![T(Token::Scope)])
+    Ok(vec![T(Token::Identifier("scope"))])
 )]
 // Scope with single statement
 #[case(
     "scope\n    x := 1",
     Ok(vec![
-        T(Token::Scope),
+        T(Token::Identifier("scope")),
         Open,
         T(Token::Identifier("x")),
         T(Token::StaticAssignment),
@@ -26,7 +26,7 @@ use lexer::{Res, Token};
 #[case(
     "scope\n    x := 1\n    y := 2\n    z := 3",
     Ok(vec![
-        T(Token::Scope),
+        T(Token::Identifier("scope")),
         Open,
         T(Token::Identifier("x")),
         T(Token::StaticAssignment),
@@ -44,13 +44,13 @@ use lexer::{Res, Token};
 #[case(
     "scope\n    x := 1\nscope\n    y := 2",
     Ok(vec![
-        T(Token::Scope),
+        T(Token::Identifier("scope")),
         Open,
         T(Token::Identifier("x")),
         T(Token::StaticAssignment),
         T(Token::Number("1")),
         Close,
-        T(Token::Scope),
+        T(Token::Identifier("scope")),
         Open,
         T(Token::Identifier("y")),
         T(Token::StaticAssignment),
@@ -62,9 +62,9 @@ use lexer::{Res, Token};
 #[case(
     "scope\n    scope\n        x := 1",
     Ok(vec![
-        T(Token::Scope),
+        T(Token::Identifier("scope")),
         Open,
-        T(Token::Scope),
+        T(Token::Identifier("scope")),
         Open,
         T(Token::Identifier("x")),
         T(Token::StaticAssignment),
@@ -80,7 +80,7 @@ use lexer::{Res, Token};
         T(Token::Function),
         T(Token::Identifier("f")),
         Open,
-        T(Token::Scope),
+        T(Token::Identifier("scope")),
         Open,
         T(Token::Identifier("x")),
         T(Token::StaticAssignment),
@@ -95,7 +95,7 @@ use lexer::{Res, Token};
 #[case(
     "scope\n    if x\n        return true",
     Ok(vec![
-        T(Token::Scope),
+        T(Token::Identifier("scope")),
         Open,
         T(Token::If),
         T(Token::Identifier("x")),

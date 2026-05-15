@@ -64,8 +64,6 @@ pub enum Token<'a> {
     // Keywords (structural)
     #[display("mut")]
     Mutable,
-    #[display("scope")]
-    Scope,
 
     // Keywords (expressions)
     #[display("true")]
@@ -88,8 +86,6 @@ pub enum Token<'a> {
     Match,
     #[display("loop")]
     Loop,
-    #[display("for")]
-    For,
 
     // Keywords (functions)
     #[display("fn")]

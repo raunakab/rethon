@@ -85,7 +85,6 @@ pub fn parser<'a>(source: &'a str) -> Res<Scope<'a>> {
 }
 
 fn parse_scope<'a>(tokens: &mut tokens!('a), indent_level: usize) -> Res<Scope<'a>> {
-    step!((Token::Scope, _) = tokens);
     let items = parse_items(tokens, indent_level.checked_add(1).unwrap())?;
     Ok(items)
 }
