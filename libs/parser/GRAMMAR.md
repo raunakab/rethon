@@ -1,5 +1,28 @@
+-- TODO:
+-- 1. Decide on set literal syntax (current `[{...}]` is visually ambiguous)
+-- 2. Define the `type` production
+
 pat ::=
   | $ident
+  | $literal
+  | $ident @ $pat
+  | $pat | $pat
+  | _
+
+  | ($($pat),+)
+  | [$($pat),*]
+  | {$($literal:$pat),*}
+  | $ident($($pat),*)
+  | $ident { $($ident$(: $pat)?),* }
+
+literal ::=
+  | true
+  | false
+  | $number
+  | $float
+  | $string
+
+type ::=
   -- etc.
 
 block ::=
@@ -10,20 +33,17 @@ item ::=
   | $expr
 
 statement ::=
-  $(mut) $pat $(: $type)? = $expr $(else $expr)?
+  | $ident $(: $type)? := $expr
+  | $(mut) $pat $(: $type)? = $expr $(else $expr)?
 
 expr ::=
-  | $expr: $type
-
   -- expressions
   | $ident
-  | true
-  | false
-  | $number
-  | $float
+  | $literal
+  | ($($expr),$($expr),*) -- tuples; there must be at least one `,` in there to explicitly inform the compiler that this must be treated as a tuple
+  | [$($expr),*] -- lists
+  | [{$($expr),*}] -- sets
   | {$($expr:$expr),*} -- maps
-  | [$($expr),*] -- sets
-  | ($(expr),$($expr),*) -- tuples; there must be at least one `,` in there to explicitly inform the compiler that this must be treated as a tuple
   
   -- logical-constructs
   | $if-else
@@ -33,6 +53,9 @@ expr ::=
   -- functions
   | $function
   | $function-invocation
+  | return $($expr)?
+  | yield $($expr)?
+  | throw $($expr)?
   
   -- typedefs
   | $struct
@@ -42,6 +65,10 @@ expr ::=
   | panic
   | todo
   | unimplemented
+  
+  -- recursion
+  | $expr: $type
+  | $block
 
 if-else ::=
   if ($expr) $expr
@@ -50,7 +77,7 @@ if-else ::=
 
 match ::=
   match ($expr)
-    $($pat $(if $expr)? => $expr),*
+    $($pat $(if $expr)? => $expr)[;]*
 
 loop ::=
   | loop $expr
@@ -64,7 +91,7 @@ function ::=
 function-invocation ::=
   | $expr($($expr),*)
   | $expr($($ident=$expr),*)
-  | $expr($($expr,)+ $($($ident=$expr),*)?)
+  | $expr($($expr,)+ $($ident=$expr),*)
 
 struct ::=
   struct
