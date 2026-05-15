@@ -61,19 +61,13 @@ pub enum Token<'a> {
     #[display("{_0}.{}", _1.unwrap_or(""))]
     Float(&'a str, Option<&'a str>),
 
-    // Keywords
-    #[display("fn")]
-    Function,
+    // Keywords (structural)
     #[display("mut")]
     Mutable,
     #[display("scope")]
     Scope,
-    #[display("return")]
-    Return,
-    #[display("yield")]
-    Yield,
-    #[display("throw")]
-    Throw,
+
+    // Keywords (expressions)
     #[display("true")]
     True,
     #[display("false")]
@@ -84,20 +78,36 @@ pub enum Token<'a> {
     And,
     #[display("or")]
     Or,
-    #[display("for")]
-    For,
-    #[display("loop")]
-    Loop,
+
+    // Keywords (logical-constructs)
     #[display("if")]
     If,
     #[display("else")]
     Else,
     #[display("match")]
     Match,
+    #[display("loop")]
+    Loop,
+    #[display("for")]
+    For,
+
+    // Keywords (functions)
+    #[display("fn")]
+    Function,
+    #[display("return")]
+    Return,
+    #[display("yield")]
+    Yield,
+    #[display("throw")]
+    Throw,
+
+    // Keywords (typedefs)
     #[display("struct")]
     Struct,
     #[display("enum")]
     Enum,
+
+    // Keywords (impl-holes)
     #[display("panic")]
     Panic,
     #[display("todo")]
