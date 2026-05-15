@@ -95,6 +95,8 @@ pub enum Token<'a> {
     If,
     #[display("else")]
     Else,
+    #[display("match")]
+    Match,
     #[display("struct")]
     Struct,
     #[display("enum")]

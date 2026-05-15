@@ -93,6 +93,7 @@ where
                 "loop" => Token::Loop,
                 "if" => Token::If,
                 "else" => Token::Else,
+                "match" => Token::Match,
                 "struct" => Token::Struct,
                 "enum" => Token::Enum,
                 "panic" => Token::Panic,

@@ -22,6 +22,7 @@ use crate::{
 #[case("loop", Ok(vec![LexKind::Normal(Token::Loop)]))]
 #[case("if", Ok(vec![LexKind::Normal(Token::If)]))]
 #[case("else", Ok(vec![LexKind::Normal(Token::Else)]))]
+#[case("match", Ok(vec![LexKind::Normal(Token::Match)]))]
 #[case("struct", Ok(vec![LexKind::Normal(Token::Struct)]))]
 #[case("enum", Ok(vec![LexKind::Normal(Token::Enum)]))]
 #[case("panic", Ok(vec![LexKind::Normal(Token::Panic)]))]
