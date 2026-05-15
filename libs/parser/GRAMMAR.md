@@ -2,19 +2,26 @@ pat ::=
   | $ident
   -- etc.
 
+block ::=
+  $($item)[;]*
+
+item ::=
+  | $statement
+  | $expr
+
 statement ::=
   $(mut) $pat $(: $type)? = $expr $(else $expr)?
 
 expr ::=
-  | $($expr)[;]*
   | $expr: $type
 
   -- expressions
+  | $ident
   | true
   | false
   | $number
   | $float
-  | {$($ident:$expr),*} -- maps
+  | {$($expr:$expr),*} -- maps
   | [$($expr),*] -- sets
   | ($(expr),$($expr),*) -- tuples; there must be at least one `,` in there to explicitly inform the compiler that this must be treated as a tuple
   
@@ -39,7 +46,7 @@ expr ::=
 if-else ::=
   if ($expr) $expr
   $(else if ($expr) $expr)*
-  else $expr
+  $(else $expr)?
 
 match ::=
   match ($expr)
@@ -53,12 +60,21 @@ loop ::=
 function ::=
   fn ($($ident $(: $type)?),*) $(-> $type)?
     $expr
+    
+function-invocation ::=
+  | $expr($($expr),*)
+  | $expr($($ident=$expr),*)
+  | $expr($($expr,)+ $($($ident=$expr),*)?)
 
 struct ::=
-  struct $ident
+  struct
     $($ident: $type)[;]*
 
 enum ::=
-  enum $ident
-    | $($ident$(($type))?)[|]*
-    | $($ident$({$ident: $type})?)[|]*
+  enum
+    $($enum-variant)[|]*
+
+enum-variant ::=
+  | $ident
+  | $ident($type)
+  | $ident{$($ident: $type),*}

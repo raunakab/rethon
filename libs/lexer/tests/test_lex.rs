@@ -27,6 +27,7 @@ enum S<'a> {
 #[case("if", Ok(vec![S::T(Token::If)]))]
 #[case("else", Ok(vec![S::T(Token::Else)]))]
 #[case("match", Ok(vec![S::T(Token::Match)]))]
+#[case("in", Ok(vec![S::T(Token::In)]))]
 #[case("struct", Ok(vec![S::T(Token::Struct)]))]
 #[case("enum", Ok(vec![S::T(Token::Enum)]))]
 #[case("panic", Ok(vec![S::T(Token::Panic)]))]

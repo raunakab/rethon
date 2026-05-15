@@ -91,6 +91,7 @@ where
                 "if" => Token::If,
                 "else" => Token::Else,
                 "match" => Token::Match,
+                "in" => Token::In,
                 "struct" => Token::Struct,
                 "enum" => Token::Enum,
                 "panic" => Token::Panic,

@@ -86,6 +86,8 @@ pub enum Token<'a> {
     Match,
     #[display("loop")]
     Loop,
+    #[display("in")]
+    In,
 
     // Keywords (functions)
     #[display("fn")]
