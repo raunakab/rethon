@@ -54,12 +54,6 @@ pub enum Token<'a> {
     MacroIdentifier(&'a str),
     #[display("{_0}")]
     Identifier(&'a str),
-    #[display(r#""{_0}""#)]
-    String(&'a str, StringType),
-    #[display("{_0}")]
-    Number(&'a str),
-    #[display("{_0}.{}", _1.unwrap_or(""))]
-    Float(&'a str, Option<&'a str>),
 
     // Keywords (structural)
     #[display("mut")]
@@ -70,6 +64,14 @@ pub enum Token<'a> {
     True,
     #[display("false")]
     False,
+    #[display("{_0}")]
+    Number(&'a str),
+    #[display("{_0}.{}", _1.unwrap_or(""))]
+    Float(&'a str, Option<&'a str>),
+    #[display(r#""{_0}""#)]
+    String(&'a str, StringType),
+
+    // Keywords (function-expressions)
     #[display("not")]
     Not,
     #[display("and")]
@@ -172,6 +174,7 @@ pub enum Token<'a> {
 pub enum Brace {
     Round,
     Square,
+    DoubleSquare,
     Curly,
 }
 
