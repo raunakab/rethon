@@ -164,8 +164,14 @@ where
                 }),
                 "(" => LexKind::Brace(Brace::Round, BraceDirection::Open),
                 ")" => LexKind::Brace(Brace::Round, BraceDirection::Close),
-                "[" => LexKind::Brace(Brace::Square, BraceDirection::Open),
-                "]" => LexKind::Brace(Brace::Square, BraceDirection::Close),
+                "[" => peek! {
+                    ("[", ..) => LexKind::Brace(Brace::DoubleSquare, BraceDirection::Open),
+                    _ => LexKind::Brace(Brace::Square, BraceDirection::Open),
+                },
+                "]" => peek! {
+                    ("]", ..) => LexKind::Brace(Brace::DoubleSquare, BraceDirection::Close),
+                    _ => LexKind::Brace(Brace::Square, BraceDirection::Close),
+                },
                 "{" => LexKind::Brace(Brace::Curly, BraceDirection::Open),
                 "}" => LexKind::Brace(Brace::Curly, BraceDirection::Close),
                 text => return Some(Err(Error::UnknownItem(text.to_string()))),
