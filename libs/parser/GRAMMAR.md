@@ -1,14 +1,13 @@
 -- TODO:
--- 1. Decide on set literal syntax (current `[{...}]` is visually ambiguous)
--- 2. Define the `type` production
+-- 1. Define the `type` production.
 
 pat ::=
   | $ident
-  | $literal
   | $ident @ $pat
   | $pat | $pat
   | _
-
+  
+  | $literal
   | ($($pat),+)
   | [$($pat),*]
   | {$($literal:$pat),*}
@@ -33,8 +32,8 @@ item ::=
   | $expr
 
 statement ::=
-  | $ident $(: $type)? := $expr
-  | $(mut) $pat $(: $type)? = $expr $(else $expr)?
+  | $ident $(: $type)? := $block
+  | $(mut) $pat $(: $type)? = $block $(else $block)?
 
 expr ::=
   -- expressions
@@ -42,7 +41,7 @@ expr ::=
   | $literal
   | ($($expr),$($expr),*) -- tuples; there must be at least one `,` in there to explicitly inform the compiler that this must be treated as a tuple
   | [$($expr),*] -- lists
-  | [{$($expr),*}] -- sets
+  | [[$($expr),*]] -- sets
   | {$($expr:$expr),*} -- maps
   
   -- logical-constructs
