@@ -39,7 +39,7 @@ expr ::=
   -- expressions
   | $ident
   | $literal
-  | ($($expr),$($expr),*) -- tuples; there must be at least one `,` in there to explicitly inform the compiler that this must be treated as a tuple
+  | ($($expr),+) -- tuples; there must be at least one `,` in there to explicitly inform the compiler that this must be treated as a tuple
   | [$($expr),*] -- lists
   | [[$($expr),*]] -- sets
   | {$($expr:$expr),*} -- maps
@@ -52,13 +52,14 @@ expr ::=
   -- functions
   | $function
   | $function-invocation
-  | return $($expr)?
-  | yield $($expr)?
-  | throw $($expr)?
+  | return $($block)?
+  | yield $($block)?
+  | throw $($block)?
   
-  -- typedefs
+  -- typedefs + type-invocations
   | $struct
   | $enum
+  | $ident { $($ident $(: $expr)?)[,]* }
   
   -- impl-holes
   | panic
@@ -69,28 +70,29 @@ expr ::=
   | $expr: $type
   | $block
 
+  -- macros
+
 if-else ::=
-  if ($expr) $expr
-  $(else if ($expr) $expr)*
-  $(else $expr)?
+  if ($block) $block
+  $(else if ($block) $block)*
+  $(else $block)?
 
 match ::=
-  match ($expr)
-    $($pat $(if $expr)? => $expr)[;]*
+  match ($block)
+    $($pat $(if $block)? => $block)[,]*
 
 loop ::=
-  | loop $expr
-  | loop ($expr) $expr
-  | loop ($pat in $expr) $expr
+  | loop $block
+  | loop ($block) $block
+  | loop ($pat in $block) $block
 
 function ::=
-  fn ($($ident $(: $type)?),*) $(-> $type)?
-    $expr
+  fn ($($ident $(: $type)?),*) $(-> $type)? [:] $block
     
 function-invocation ::=
-  | $expr($($expr),*)
-  | $expr($($ident=$expr),*)
-  | $expr($($expr,)+ $($ident=$expr),*)
+  | $block($($block),*)
+  | $block($($ident=$block),*)
+  | $block($($block,)+ $($ident=$block),*)
 
 struct ::=
   struct
@@ -102,5 +104,5 @@ enum ::=
 
 enum-variant ::=
   | $ident
-  | $ident($type)
+  | $ident($($type),*)
   | $ident{$($ident: $type),*}
