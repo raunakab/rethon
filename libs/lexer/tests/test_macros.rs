@@ -1,7 +1,6 @@
 mod common;
 
-use common::S::T;
-use common::{S, collect};
+use common::{S, S::T, collect};
 use lexer::{Res, Token};
 
 #[rstest::rstest]

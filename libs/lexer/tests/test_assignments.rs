@@ -1,7 +1,10 @@
 mod common;
 
-use common::S::{Close, Open, T};
-use common::{S, collect};
+use common::{
+    S,
+    S::{Close, Open, T},
+    collect,
+};
 use lexer::{Res, StringType, Token};
 
 #[rstest::rstest]

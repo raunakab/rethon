@@ -1,9 +1,8 @@
+use super::scope;
 use crate::{
     Brace, BraceDirection, Error, Res, Token, TokenTree, s1_segmenter::segment,
     s2_clusterer::cluster, s3_whitespace_stripper::whitespace_strip,
 };
-
-use super::scope;
 
 // Simplified node type for easier testing (strips ranges and source positions)
 #[derive(Clone, Debug, PartialEq, Eq)]
