@@ -1,13 +1,22 @@
-#![allow(dead_code, unused_variables, unused_imports)]
+#![allow(dead_code)]
 
 macro_rules! step {
+    (
+        $tokens:expr
+        $(,)?
+    ) => {{
+        bind!((_, _) = $tokens);
+    }};
+}
+
+macro_rules! bind {
     (
         ($a:pat, $b:pat) = $tokens:expr
         $(,)?
     ) => {
-        let result = match $tokens.peek() {
-            Some(Ok(..)) => $tokens.next().unwrap().unwrap(),
-            Some(Err(..)) => return Err($tokens.next().unwrap().unwrap_err().into()),
+        let result = match $tokens.next() {
+            Some(Ok(r)) => r,
+            Some(Err(e)) => return Err(e.into()),
             None => return Err(Error::UnexpectedEof),
         };
 
@@ -15,14 +24,14 @@ macro_rules! step {
     };
 }
 
-macro_rules! stepif {
+macro_rules! bindif {
     (
         ($a:pat, $b:pat) = $tokens:expr
         $(,)?
     ) => {
         match $tokens.peek() {
             #[allow(unused_variables)]
-            Some(Ok(token!($a, $b))) => {}
+            Some(Ok(token!($a, $b))) => (),
             Some(Err(..)) => return Err($tokens.next().unwrap().unwrap_err().into()),
             _ => return Ok(None),
         }
@@ -61,11 +70,17 @@ macro_rules! token {
     };
 }
 
-mod expressions;
-mod literals;
+mod block;
+mod r#if;
+mod r#match;
+mod pattern;
+mod statement;
+mod r#type;
 
-use lexer::{StringType, Token, lex, tokens};
+use lexer::{StringType, lex};
 use thiserror::Error;
+
+use crate::block::{parse_block, parse_indented_block};
 
 type Res<T = ()> = Result<T, Error>;
 
@@ -77,6 +92,9 @@ pub enum Error {
     #[error("Unexpected EOF encountered")]
     UnexpectedEof,
 
+    #[error("Unexpected indentation encountered")]
+    UnexpectedIndentation,
+
     #[error("Ran into an unexpected token, {0}")]
     UnexpectedToken(String),
 
@@ -86,66 +104,8 @@ pub enum Error {
 
 pub fn parser<'a>(source: &'a str) -> Res<Block<'a>> {
     let mut tokens = lex(source);
-    let block = parse_block(&mut tokens, 0)?;
+    let block = parse_indented_block(&mut tokens, 0)?;
     Ok(block)
-}
-
-fn parse_scope<'a>(tokens: &mut tokens!('a), indent_level: usize) -> Res<Block<'a>> {
-    let block = parse_block(tokens, indent_level.checked_add(1).unwrap())?;
-    Ok(block)
-}
-
-fn parse_block<'a>(tokens: &mut tokens!('a), indent_level: usize) -> Res<Block<'a>> {
-    todo!()
-}
-
-fn parse_item<'a>(tokens: &mut tokens!('a), indent_level: usize) -> Res<Item<'a>> {
-    todo!()
-}
-
-fn parse_statement<'a>(tokens: &mut tokens!('a)) -> Res<Statement<'a>> {
-    todo!()
-    // let pattern = parse_pattern(tokens)?;
-    // let r#type = parse_optional_type(tokens)?;
-    // let value = parse_expression(tokens)?;
-    // let pattern_match_fail = parse_pattern_match_fail(tokens)?;
-    // Ok(Statement {
-    //     pattern,
-    //     r#type,
-    //     value,
-    //     pattern_match_fail,
-    // })
-}
-
-fn parse_pattern<'a>(tokens: &mut tokens!('a)) -> Res<Pattern<'a>> {
-    step!((Token::Identifier(identifier), _) = tokens);
-    Ok(Pattern::Ident(identifier))
-}
-
-fn parse_optional_type<'a>(tokens: &mut tokens!('a)) -> Res<Option<Expression<'a>>> {
-    stepif!((Token::Semicolon, _) = tokens);
-    let r#type = parse_expression(tokens)?;
-    Ok(Some(r#type))
-}
-
-fn parse_expression<'a>(tokens: &mut tokens!('a)) -> Res<Expression<'a>> {
-    Ok(match peek!(tokens) {
-        token!(Token::Semicolon, _) => Expression::Noop,
-        token!(Token::Comma, _) => {
-            return Err(Error::UnexpectedChar(Token::Comma.to_string()));
-        }
-
-        token!(Token::MacroIdentifier(_), _) => Expression::Macro(Box::new(parse_macro(tokens)?)),
-        _ => todo!(),
-    })
-}
-
-fn parse_macro<'a>(tokens: &mut tokens!('a)) -> Res<Macro> {
-    todo!()
-}
-
-fn parse_pattern_match_fail<'a>(_tokens: &mut tokens!('a)) -> Res<Option<Block<'a>>> {
-    Ok(None)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -5,6 +5,7 @@ pat ::=
   | $ident
   | $ident @ $pat
   | $pat | $pat
+  | ($pat)
   | _
   
   | $literal
@@ -73,21 +74,21 @@ expr ::=
   -- macros
 
 if-else ::=
-  if ($block) $block
-  $(else if ($block) $block)*
-  $(else $block)?
+  if $block: $block
+  $(else if $block: $block)*
+  $(else: $block)?
 
 match ::=
-  match ($block)
+  match $block:
     $($pat $(if $block)? => $block)[,]*
 
 loop ::=
-  | loop $block
-  | loop ($block) $block
-  | loop ($pat in $block) $block
+  | loop: $block
+  | loop $block: $block
+  | loop $pat in $block: $block
 
 function ::=
-  fn ($($ident $(: $type)?),*) $(-> $type)? [:] $block
+  fn $($ident $(: $type)?,)* $(-> $type)?: $($block)?
     
 function-invocation ::=
   | $block($($block),*)
@@ -95,11 +96,11 @@ function-invocation ::=
   | $block($($block,)+ $($ident=$block),*)
 
 struct ::=
-  struct
+  struct:
     $($ident: $type)[;]*
 
 enum ::=
-  enum
+  enum:
     $($enum-variant)[|]*
 
 enum-variant ::=
