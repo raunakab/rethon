@@ -7,3 +7,6 @@ pub(crate) fn parse_type_declaration_optional<'a>(
 ) -> Res<Option<Expression<'a>>> {
     todo!()
 }
+
+#[cfg(test)]
+mod tests;

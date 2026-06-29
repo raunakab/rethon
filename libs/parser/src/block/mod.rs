@@ -29,3 +29,6 @@ pub(crate) fn parse_optional_indented_block<'a>(
 ) -> Res<Option<Block<'a>>> {
     todo!()
 }
+
+#[cfg(test)]
+mod tests;

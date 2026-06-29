@@ -41,3 +41,6 @@ fn parse_match_arms<'a>(tokens: &mut tokens!('a), indent_level: usize) -> Res<Ve
         match_arms.push(match_arm);
     })
 }
+
+#[cfg(test)]
+mod tests;

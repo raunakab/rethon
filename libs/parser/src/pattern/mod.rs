@@ -50,3 +50,6 @@ pub(crate) fn parse_literal<'a>(tokens: &mut tokens!('a)) -> Res<Literal<'a>> {
     };
     Ok(literal)
 }
+
+#[cfg(test)]
+mod tests;
