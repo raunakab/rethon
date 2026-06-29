@@ -12,6 +12,16 @@ fn test_simple_if() {
 
 #[test]
 #[ignore]
+fn test_if_inline_body() {
+    let block = parser("if x: y").unwrap();
+    assert!(matches!(
+        block.items.as_slice(),
+        [Item::Expression(Expression::If(_))]
+    ));
+}
+
+#[test]
+#[ignore]
 fn test_if_else() {
     let block = parser("if x:\n    y\nelse:\n    z").unwrap();
     assert!(matches!(
@@ -32,22 +42,21 @@ fn test_if_else_if_else() {
 
 #[test]
 #[ignore]
-fn test_if_inline_body() {
-    // body on the same line as the condition
-    let block = parser("if x: y").unwrap();
+fn test_if_compound_condition() {
+    let block = parser("if x and y:\n    z").unwrap();
     assert!(matches!(
         block.items.as_slice(),
         [Item::Expression(Expression::If(_))]
     ));
 }
 
-#[test]
-#[ignore]
-fn test_if_no_else() {
-    let block = parser("if x:\n    y").unwrap();
+// Structure assertions
+
+fn assert_if_structure(source: &str, else_if_count: usize, has_else: bool) {
+    let block = parser(source).unwrap();
     if let Item::Expression(Expression::If(if_expr)) = &block.items[0] {
-        assert!(if_expr.antequent.is_none());
-        assert!(if_expr.conditional_antequents.is_empty());
+        assert_eq!(if_expr.conditional_antequents.len(), else_if_count);
+        assert_eq!(if_expr.antequent.is_some(), has_else);
     } else {
         panic!("expected If expression");
     }
@@ -55,12 +64,28 @@ fn test_if_no_else() {
 
 #[test]
 #[ignore]
-fn test_else_if_chain_length() {
-    let block = parser("if a:\n    1\nelse if b:\n    2\nelse if c:\n    3").unwrap();
-    if let Item::Expression(Expression::If(if_expr)) = &block.items[0] {
-        assert_eq!(if_expr.conditional_antequents.len(), 2);
-        assert!(if_expr.antequent.is_none());
-    } else {
-        panic!("expected If expression");
-    }
+fn test_if_structure_plain() {
+    assert_if_structure("if x:\n    y", 0, false);
+}
+
+#[test]
+#[ignore]
+fn test_if_structure_one_else_if() {
+    assert_if_structure("if a:\n    1\nelse if b:\n    2", 1, false);
+}
+
+#[test]
+#[ignore]
+fn test_if_structure_one_else_if_and_else() {
+    assert_if_structure("if a:\n    1\nelse if b:\n    2\nelse:\n    3", 1, true);
+}
+
+#[test]
+#[ignore]
+fn test_if_structure_two_else_ifs_and_else() {
+    assert_if_structure(
+        "if a:\n    1\nelse if b:\n    2\nelse if c:\n    3\nelse:\n    4",
+        2,
+        true,
+    );
 }

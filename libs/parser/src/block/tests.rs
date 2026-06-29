@@ -2,33 +2,30 @@ use lexer::lex;
 
 use super::{BlockTerminator, parse_block, parse_indented_block, parse_optional_indented_block};
 
-// --- parse_block ---
-
 #[test]
 #[ignore]
-fn test_block_single_expr() {
-    // `x:` — single identifier, terminated by colon
+fn test_block_colon_terminated() {
     let mut tokens = lex("x:");
     parse_block(&mut tokens, Some(BlockTerminator::Colon)).unwrap();
 }
 
 #[test]
 #[ignore]
-fn test_block_complex_expr() {
+fn test_block_complex_colon_terminated() {
     let mut tokens = lex("x + y:");
     parse_block(&mut tokens, Some(BlockTerminator::Colon)).unwrap();
 }
 
 #[test]
 #[ignore]
-fn test_block_terminated_by_comma() {
+fn test_block_comma_terminated() {
     let mut tokens = lex("x,");
     parse_block(&mut tokens, Some(BlockTerminator::Comma)).unwrap();
 }
 
 #[test]
 #[ignore]
-fn test_block_terminated_by_fat_arrow() {
+fn test_block_fat_arrow_terminated() {
     let mut tokens = lex("x =>");
     parse_block(&mut tokens, Some(BlockTerminator::FatArrow)).unwrap();
 }
@@ -40,23 +37,19 @@ fn test_block_no_terminator() {
     parse_block(&mut tokens, None).unwrap();
 }
 
-// --- parse_indented_block ---
-
 #[test]
 #[ignore]
-fn test_indented_block_single_item() {
+fn test_indented_block_single() {
     let mut tokens = lex("x");
     parse_indented_block(&mut tokens, 0).unwrap();
 }
 
 #[test]
 #[ignore]
-fn test_indented_block_multiple_items() {
+fn test_indented_block_multiple() {
     let mut tokens = lex("x\ny\nz");
     parse_indented_block(&mut tokens, 0).unwrap();
 }
-
-// --- parse_optional_indented_block ---
 
 #[test]
 #[ignore]
