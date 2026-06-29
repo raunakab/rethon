@@ -2,7 +2,17 @@ use lexer::tokens;
 
 use crate::{Block, Res};
 
-pub(crate) fn parse_block<'a>(_tokens: &mut tokens!('a)) -> Res<Block<'a>> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum BlockTerminator {
+    Colon,
+    Comma,
+    FatArrow,
+}
+
+pub(crate) fn parse_block<'a>(
+    _tokens: &mut tokens!('a),
+    _terminator: Option<BlockTerminator>,
+) -> Res<Block<'a>> {
     todo!()
 }
 
@@ -19,7 +29,3 @@ pub(crate) fn parse_optional_indented_block<'a>(
 ) -> Res<Option<Block<'a>>> {
     todo!()
 }
-
-// pub(crate) fn parse_expression<'a>(tokens: &mut tokens!('a)) -> Res<Expression<'a>> {
-//     todo!()
-// }

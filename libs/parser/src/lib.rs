@@ -80,7 +80,7 @@ mod r#type;
 use lexer::{StringType, lex};
 use thiserror::Error;
 
-use crate::block::{parse_block, parse_indented_block};
+use crate::block::parse_indented_block;
 
 type Res<T = ()> = Result<T, Error>;
 

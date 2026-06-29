@@ -1,10 +1,13 @@
 use lexer::{Token, tokens};
 
-use crate::{Block, ElseIf, Error, If, Res, block::parse_optional_indented_block, parse_block};
+use crate::{
+    Block, ElseIf, Error, If, Res,
+    block::{BlockTerminator, parse_block, parse_optional_indented_block},
+};
 
 pub(crate) fn parse_if<'a>(tokens: &mut tokens!('a)) -> Res<If<'a>> {
     bind!((Token::If, indent_level) = tokens);
-    let condition = parse_block(tokens)?;
+    let condition = parse_block(tokens, Some(BlockTerminator::Colon))?;
     let consequent = parse_optional_indented_block(tokens, indent_level)?;
 
     let (conditional_antequents, antequent) = parse_conditional_antequents(tokens, indent_level)?;
@@ -51,7 +54,7 @@ fn parse_conditional_antequents<'a>(
         Ok(Some(match peek!(tokens) {
             token!(Token::If, _) => {
                 step!(tokens);
-                let condition = parse_block(tokens)?;
+                let condition = parse_block(tokens, Some(BlockTerminator::Colon))?;
                 let consequent = parse_optional_indented_block(tokens, indent_level)?;
                 Either::Left(ElseIf {
                     condition,
@@ -59,6 +62,7 @@ fn parse_conditional_antequents<'a>(
                 })
             }
             _ => {
+                bind!((Token::Colon, _) = tokens); // `else:` has no condition block
                 let consequent = parse_optional_indented_block(tokens, indent_level)?;
                 Either::Right(consequent)
             }

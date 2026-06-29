@@ -1,10 +1,14 @@
 use lexer::{Token, tokens};
 
-use crate::{Error, Match, MatchArm, Res, block::parse_block, pattern::parse_pattern};
+use crate::{
+    Error, Match, MatchArm, Res,
+    block::{BlockTerminator, parse_block},
+    pattern::parse_pattern,
+};
 
 pub(crate) fn parse_match<'a>(tokens: &mut tokens!('a)) -> Res<Match<'a>> {
     bind!((Token::Match, indent_level) = tokens);
-    let condition = parse_block(tokens)?;
+    let condition = parse_block(tokens, Some(BlockTerminator::Colon))?;
     let match_arms = parse_match_arms(tokens, indent_level)?;
 
     Ok(Match {
@@ -21,7 +25,7 @@ fn parse_match_arms<'a>(tokens: &mut tokens!('a), indent_level: usize) -> Res<Ve
     ) -> Res<Option<MatchArm<'a>>> {
         let _pattern = parse_pattern(tokens)?;
         bind!((Token::FatArrow, _) = tokens);
-        let _body = parse_block(tokens)?;
+        let _body = parse_block(tokens, Some(BlockTerminator::Comma))?;
 
         todo!()
     }
