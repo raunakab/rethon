@@ -14,116 +14,61 @@ Python re-imagined.
 - Macros
 - Arc based memory-management (no garbage collection)
 
-## Grammar
+## Examples
 
-Rethon uses an indentation-based, colon-delimited syntax. The grammar is written in a BNF-like notation where `$x` denotes a non-terminal, `$(...)` denotes repetition, `[sep]*` / `[sep]+` denote zero-or-more / one-or-more with a separator, and `?` denotes optionality.
+Bindings are immutable by default. `:=` is a static (immutable) binding; `=` is mutable.
 
 ```
-block ::=
-  $($item)[;]*
+x := 42
+mut count = 0
+```
 
-item ::=
-  | $statement
-  | $expr
+Functions are expressions. The body is the last evaluated expression.
 
-statement ::=
-  | $ident $(: $type)? := $block                           -- static (immutable) binding
-  | $(mut) $pat $(: $type)? = $block $(else $block)?       -- normal (mutable) binding
+```
+factorial := fn n: int -> int:
+    match n:
+        0 => 1,
+        n => n * factorial(n - 1),
+```
 
-expr ::=
-  -- primitives
-  | $ident
-  | $literal
-  | ($($expr),+)                    -- tuple (requires at least one comma)
-  | [$($expr),*]                    -- list
-  | [[$($expr),*]]                  -- set
-  | {$($expr:$expr),*}              -- map
+Algebraic datatypes with pattern matching:
 
-  -- control flow
-  | $if-else
-  | $match
-  | $loop
+```
+Shape := enum:
+    Circle(float)
+    | Rect(float, float)
+    | Triangle(float, float, float)
 
-  -- functions
-  | $function
-  | $function-invocation
-  | return $($block)?
-  | yield $($block)?
-  | throw $($block)?
+area := fn shape: Shape -> float:
+    match shape:
+        Circle(r)        => 3.14159 * r * r,
+        Rect(w, h)       => w * h,
+        Triangle(a, b, c):
+            s := (a + b + c) / 2.0
+            (s * (s - a) * (s - b) * (s - c)) ** 0.5,
+```
 
-  -- type definitions
-  | $struct
-  | $enum
-  | $ident { $($ident $(: $expr)?)[,]* }
+`if` and `match` are expressions — they can appear anywhere a value is expected:
 
-  -- impl holes
-  | panic
-  | todo
-  | unimplemented
+```
+sign := fn x: int -> str:
+    if x > 0: "positive"
+    else if x < 0: "negative"
+    else: "zero"
+```
 
-  -- other
-  | $expr: $type                    -- type ascription
-  | $block
-  | $macro
+Loops come in three forms — unconditional, conditional, and iterative:
 
-if-else ::=
-  if $block:
-    $block
-  $(else if $block:
-    $block)*
-  $(else:
-    $block)?
+```
+loop:
+    do_something()
 
-match ::=
-  match $block:
-    $($pat $(if $block)? => $block)[,]*
+loop not_done():
+    step()
 
-loop ::=
-  | loop: $block                          -- unconditional
-  | loop $block: $block                   -- conditional (while)
-  | loop $pat in $block: $block           -- iterative (for)
-
-function ::=
-  fn $($ident $(: $type)?,)* $(-> $type)?:
-    $($block)?
-
-function-invocation ::=
-  | $block($($block),*)                           -- positional args
-  | $block($($ident=$block),*)                    -- keyword args
-  | $block($($block,)+ $($ident=$block),*)        -- positional then keyword
-
-struct ::=
-  struct:
-    $($ident: $type)[;]*
-
-enum ::=
-  enum:
-    $($enum-variant)[|]*
-
-enum-variant ::=
-  | $ident
-  | $ident($($type),*)
-  | $ident{$($ident: $type),*}
-
-pat ::=
-  | $ident
-  | $ident @ $pat                         -- binding pattern
-  | $pat | $pat                           -- or pattern
-  | ($pat)
-  | _                                     -- wildcard
-  | $literal
-  | ($($pat),+)                           -- tuple pattern
-  | [$($pat),*]                           -- list pattern
-  | {$($literal:$pat),*}                  -- map pattern
-  | $ident($($pat),*)                     -- enum tuple-variant pattern
-  | $ident { $($ident$(: $pat)?),* }      -- enum struct-variant pattern
-
-literal ::=
-  | true
-  | false
-  | $number
-  | $float
-  | $string
+loop item in collection:
+    process(item)
 ```
 
 ## Inspiration
