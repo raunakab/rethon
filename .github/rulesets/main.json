@@ -34,7 +34,8 @@
         "strict_required_status_checks_policy": true,
         "required_status_checks": [
           { "context": "Test" },
-          { "context": "Lint" }
+          { "context": "Lint" },
+          { "context": "Validate PR Title" }
         ]
       }
     }
