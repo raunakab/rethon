@@ -1,9 +1,9 @@
-# Rethon
+# rethon - Python Re-Imagined
 
 [![CI](https://github.com/raunakab/rethon/actions/workflows/test-and-lint.yml/badge.svg)](https://github.com/raunakab/rethon/actions/workflows/test-and-lint.yml)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
 
-Python re-imagined.
+Rethon is a statically typed, functional-first language with Python-inspired syntax. It pairs algebraic datatypes, exhaustive pattern matching, and ultra-aggressive type inference with Arc-based memory management — no garbage collector required.
 
 ## Features
 
