@@ -1,0 +1,33 @@
+name: PR Title
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title for Conventional Commits
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|test|ci|refactor|perf|chore|revert|build)(\(.+\))?:\ .+ ]]; then
+            echo "::error::PR title does not follow Conventional Commits format."
+            echo ""
+            echo "Valid examples:"
+            echo "  feat: add pattern parser"
+            echo "  fix(lexer): handle unterminated strings"
+            echo "  docs: update README examples"
+            exit 1
+          fi
