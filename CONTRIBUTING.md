@@ -48,9 +48,9 @@ cargo fmt
 ## Project structure
 
 ```
-libs/
-  tokenizer/   — converts source text into a token stream (4-stage pipeline)
-  parser/      — converts the token stream into an AST (work in progress)
+crates/
+  lexer/    — converts source text into a token stream (4-stage pipeline)
+  parser/   — converts the token stream into an AST (work in progress)
 ```
 
-See `libs/tokenizer/README.md` for a detailed description of the tokenizer pipeline.
+See `crates/lexer/README.md` for a detailed description of the lexer pipeline.
